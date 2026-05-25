@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spouse / Partner Passed Away — Contracts Analysis</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d0f14;color:#e8eaf0;overflow:hidden;height:100vh}
+.deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;padding:50px 64px 48px;overflow-y:auto}
+.slide.active{display:flex}
+:root{
+  --rose:#f48fb1;--rose-dark:#c2185b;--rose-soft:#fce4ec;
+  --teal:#4dd0e1;--amber:#ffd54f;--green:#69f0ae;
+  --red:#ef5350;--blue:#64b5f6;--purple:#ce93d8;
+  --bg2:#161920;--bg3:#1e2130;--border:#2a2d3a;
+}
+h1{font-size:2.7rem;font-weight:800;line-height:1.15;margin-bottom:.5rem}
+h2{font-size:2rem;font-weight:700;margin-bottom:.4rem}
+h3{font-size:.95rem;font-weight:600;color:#9aa0b8;margin-bottom:1rem;letter-spacing:.05em;text-transform:uppercase}
+p{color:#b0b8d0;font-size:.97rem;line-height:1.65;margin-bottom:.5rem}
+.sub{font-size:.82rem;color:#6b7494}
+
+.stat-row{display:flex;gap:16px;flex-wrap:wrap;margin:18px 0}
+.stat-box{flex:1;min-width:130px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.stat-num{font-size:2.5rem;font-weight:900;line-height:1}
+.stat-label{font-size:.75rem;color:#7a82a0;margin-top:5px;text-transform:uppercase;letter-spacing:.05em}
+.stat-sub{font-size:.8rem;color:#9aa0b8;margin-top:4px}
+
+.tbl-wrap{overflow-x:auto;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:.87rem}
+th{background:#1a1d28;color:#9aa0b8;text-align:left;padding:9px 12px;font-weight:600;border-bottom:2px solid var(--border)}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.03)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-family:monospace}
+
+.bar-row{display:flex;align-items:center;gap:10px;margin:5px 0}
+.bar-label{width:220px;font-size:.82rem;color:#c8cce0;flex-shrink:0;text-align:right}
+.bar-track{flex:1;background:#1e2130;border-radius:4px;height:18px;position:relative;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-rose .bar-fill{background:linear-gradient(90deg,#c2185b,#f48fb1)}
+.bar-teal .bar-fill{background:linear-gradient(90deg,#00838f,#4dd0e1)}
+.bar-val{width:48px;font-size:.78rem;font-family:monospace;text-align:right;color:#9aa0b8;flex-shrink:0}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:14px 0}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px}
+.card-icon{font-size:1.6rem;margin-bottom:7px}
+.card-title{font-size:.97rem;font-weight:700;margin-bottom:6px}
+.card-body{font-size:.82rem;color:#9aa0b8;line-height:1.55}
+.card.rose{border-color:var(--rose-dark);background:rgba(194,24,91,.06)}
+.card.teal{border-color:var(--teal);background:rgba(77,208,225,.05)}
+.card.amber{border-color:var(--amber);background:rgba(255,213,79,.05)}
+
+.quote-block{background:var(--bg2);border-left:3px solid var(--rose);border-radius:0 8px 8px 0;padding:12px 16px;margin:8px 0;font-size:.85rem;font-style:italic;color:#c8cce0;line-height:1.6}
+.quote-block .tag{display:inline-block;background:rgba(194,24,91,.2);color:var(--rose);border-radius:4px;padding:1px 7px;font-size:.7rem;font-style:normal;font-weight:700;margin-bottom:5px}
+
+.callout{display:flex;align-items:flex-start;gap:12px;background:rgba(194,24,91,.07);border:1px solid rgba(194,24,91,.25);border-radius:12px;padding:16px;margin:14px 0}
+.callout-icon{font-size:1.5rem;flex-shrink:0;margin-top:2px}
+.callout-text{font-size:.9rem;color:#d4bec4;line-height:1.55}
+.callout-text strong{color:#fff}
+.callout.teal{background:rgba(77,208,225,.06);border-color:rgba(77,208,225,.2)}
+.callout-text.teal{color:#b2dce4}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;margin:2px}
+.pill-rose{background:rgba(194,24,91,.18);color:var(--rose)}
+.pill-teal{background:rgba(77,208,225,.15);color:var(--teal)}
+.pill-amber{background:rgba(255,213,79,.15);color:var(--amber)}
+.pill-purple{background:rgba(206,147,216,.15);color:var(--purple)}
+
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--rose);transition:width .3s;z-index:100}
+.nav{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;z-index:50}
+.nav button{background:rgba(255,255,255,.08);border:none;color:#c8cce0;padding:7px 18px;border-radius:20px;cursor:pointer;font-size:.83rem;transition:background .2s}
+.nav button:hover{background:rgba(255,255,255,.18)}
+.slide-counter{font-size:.78rem;color:#666;min-width:60px;text-align:center}
+
+.title-bg{justify-content:center;background:radial-gradient(ellipse at 25% 40%,rgba(194,24,91,.18) 0%,transparent 55%),radial-gradient(ellipse at 75% 65%,rgba(77,208,225,.08) 0%,transparent 50%)}
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.badge{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 14px;font-size:.8rem;color:#9aa0b8}
+.badge span{color:#fff;font-weight:700}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:3px}
+
+/* quote grid for all-quotes slide */
+.quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+@media(max-width:900px){.quote-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
+.q-mini{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:.8rem;font-style:italic;color:#b8bfd4;line-height:1.5;position:relative}
+.q-num{position:absolute;top:8px;right:10px;font-size:.68rem;color:#3a3f55;font-style:normal}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- SLIDE 1 — TITLE -->
+<div class="slide active title-bg" id="s1">
+  <h3>Contracts File · 1,153 Calls · Deep Analysis</h3>
+  <h1>Spouse or Partner<br>Passed Away</h1>
+  <p style="font-size:1.1rem;color:#9aa0b8;margin:10px 0 18px">Which additional reasons, motivations, and contexts are attached to this life event — and what sellers actually say</p>
+  <div class="badge-row">
+    <div class="badge">Total calls analyzed <span>1,153</span></div>
+    <div class="badge">Calls with spouse/partner passed <span style="color:var(--rose)">190</span></div>
+    <div class="badge">Rate <span style="color:var(--rose)">16.5%</span></div>
+    <div class="badge">Closed <span style="color:var(--green)">65</span></div>
+    <div class="badge">Dead <span style="color:var(--red)">70</span></div>
+    <div class="badge">Other/Active <span style="color:var(--amber)">55</span></div>
+  </div>
+  <div class="cards" style="margin-top:20px">
+    <div class="card rose">
+      <div class="card-icon">💔</div>
+      <div class="card-title">1 in 6 contract calls</div>
+      <div class="card-body">16.5% of all contract conversations involve a seller whose spouse or partner has passed away. This is not a niche segment — it's a core seller profile.</div>
+    </div>
+    <div class="card teal">
+      <div class="card-icon">📊</div>
+      <div class="card-title">What this analysis covers</div>
+      <div class="card-body">Co-occurring reasons and situations attached to the loss, structured motivations from the data, and every verbatim seller quote mentioning the passing</div>
+    </div>
+    <div class="card amber">
+      <div class="card-icon">⚖️</div>
+      <div class="card-title">Closed vs Dead split</div>
+      <div class="card-body">65 closed (34%), 70 dead (37%), 55 active/other (29%). This segment closes at roughly the same rate as the overall file — grief doesn't stop deals, it shapes them.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2 — CO-OCCURRING TOPICS -->
+<div class="slide" id="s2">
+  <h3>Additional Reasons Co-Occurring</h3>
+  <h2>What Else Is Always In the Picture</h2>
+  <p>Of the 190 calls where a spouse/partner passed — what other situations are present in the same transcript</p>
+
+  <div class="bar-row bar-rose"><div class="bar-label">Estate / inherited property</div><div class="bar-track"><div class="bar-fill" style="width:57%"></div></div><div class="bar-val">57%</div></div>
+  <div class="bar-row bar-rose"><div class="bar-label">Ready for a fresh start</div><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><div class="bar-val">55%</div></div>
+  <div class="bar-row bar-rose"><div class="bar-label">Rental property / landlord</div><div class="bar-track"><div class="bar-fill" style="width:43%"></div></div><div class="bar-val">43%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Fixed income / retirement</div><div class="bar-track"><div class="bar-fill" style="width:22%"></div></div><div class="bar-val">22%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Behind on bills / taxes</div><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div><div class="bar-val">18%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Health issues (self)</div><div class="bar-track"><div class="bar-fill" style="width:16%"></div></div><div class="bar-val">16%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Overwhelmed / exhausted</div><div class="bar-track"><div class="bar-fill" style="width:14%"></div></div><div class="bar-val">14%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Divorce / separation</div><div class="bar-track"><div class="bar-fill" style="width:10%"></div></div><div class="bar-val">10%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Can't maintain alone</div><div class="bar-track"><div class="bar-fill" style="width:9%"></div></div><div class="bar-val">9%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Downsizing</div><div class="bar-track"><div class="bar-fill" style="width:8%"></div></div><div class="bar-val">8%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Foreclosure risk</div><div class="bar-track"><div class="bar-fill" style="width:8%"></div></div><div class="bar-val">8%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">House too big now</div><div class="bar-track"><div class="bar-fill" style="width:7%"></div></div><div class="bar-val">7%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Moving to assisted living</div><div class="bar-track"><div class="bar-fill" style="width:7%"></div></div><div class="bar-val">7%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Too many memories</div><div class="bar-track"><div class="bar-fill" style="width:4%"></div></div><div class="bar-val">4%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Grief / still processing</div><div class="bar-track"><div class="bar-fill" style="width:3%"></div></div><div class="bar-val">3%</div></div>
+  <div class="bar-row bar-teal"><div class="bar-label">Moving closer to family</div><div class="bar-track"><div class="bar-fill" style="width:1%"></div></div><div class="bar-val">1%</div></div>
+</div>
+
+<!-- SLIDE 3 — TOP 3 CO-OCCURRING DEEP DIVE -->
+<div class="slide" id="s3">
+  <h3>Top Co-Occurring Reasons — Deep Dive</h3>
+  <h2>The Three Most Common Attached Situations</h2>
+  <div class="cards">
+    <div class="card rose">
+      <div class="card-icon">🏠</div>
+      <div class="card-title">#1 — Estate / Inherited Property (57%)</div>
+      <div class="card-body">In over half of these calls, the property being sold was the deceased spouse's or a family member's — now going through probate or informal estate transfer. The seller is often a child, sibling, or niece/nephew, not the widow/widower themselves.</div>
+    </div>
+    <div class="card rose">
+      <div class="card-icon">🌅</div>
+      <div class="card-title">#2 — Ready for a Fresh Start (55%)</div>
+      <div class="card-body">The most emotionally positive signal in this cluster. More than half of sellers in this group explicitly say they're ready to move on, start a new chapter, or simplify their life. The grief has passed (or is far enough along) that they're looking forward.</div>
+    </div>
+    <div class="card rose">
+      <div class="card-icon">🔑</div>
+      <div class="card-title">#3 — Rental Property / Landlord (43%)</div>
+      <div class="card-body">Nearly half the time, the property being sold is a rental — not the home they live in. The deceased managed it; now the surviving spouse or heir doesn't want to be a landlord. The motivation is practical, not sentimental.</div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:14px">
+    <div class="callout-icon">💡</div>
+    <div class="callout-text"><strong>What this means for conversations:</strong> The "spouse passed" trigger often splits into two very different seller types — (1) the surviving spouse who lived in the home and has deep emotional attachment, and (2) an adult child or heir managing a rental or estate property at arm's length. These require completely different approaches.</div>
+  </div>
+</div>
+
+<!-- SLIDE 4 — FINANCIAL LAYER -->
+<div class="slide" id="s4">
+  <h3>Financial Layer</h3>
+  <h2>The Money Pressures Behind the Loss</h2>
+  <div class="cards">
+    <div class="card amber">
+      <div class="card-icon">💸</div>
+      <div class="card-title">Fixed Income / Retirement — 22%</div>
+      <div class="card-body">1 in 5 of these sellers is on a fixed income — Social Security, pension, or retirement savings. The loss of a spouse often means the loss of a second income stream. The house becomes a financial asset they need to convert.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-icon">📋</div>
+      <div class="card-title">Behind on Bills / Taxes — 18%</div>
+      <div class="card-body">Almost 1 in 5 has fallen behind on property taxes, utilities, or mortgage payments after the loss. Managing finances alone is harder — especially when the deceased handled the bills. Time pressure is real here.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-icon">🏦</div>
+      <div class="card-title">Foreclosure Risk — 8%</div>
+      <div class="card-body">8% are at or near foreclosure. Often the widow/widower couldn't keep up with payments after losing the second income — or inherited a property with a reverse mortgage or liens that are now coming due.</div>
+    </div>
+  </div>
+  <div class="quote-block">
+    <div class="tag">SELLER — FINANCIAL + LOSS</div>
+    "i lost my husband two years ago that's why i'm selling it it was rental property for us and i can't deal with it i'm behind on bills and i have to get rid of it"
+  </div>
+  <div class="quote-block">
+    <div class="tag">SELLER — FIXED INCOME</div>
+    "i lost my wife a couple years ago and there's nobody here but me so... i'm getting too old i'm going to be eighty nine this year and it's just getting too much for me to take care of"
+  </div>
+  <div class="quote-block">
+    <div class="tag">SELLER — WIDOW + FORECLOSURE</div>
+    "i lost my husband unexpectedly last year at the age of forty eight and i have two kids... they tried to foreclose on me for twenty thousand dollars"
+  </div>
+</div>
+
+<!-- SLIDE 5 — EMOTIONAL / LIFE LAYER -->
+<div class="slide" id="s5">
+  <h3>Emotional & Life Situation Layer</h3>
+  <h2>What Sellers Are Living Through</h2>
+  <div class="two-col">
+    <div>
+      <div class="cards" style="grid-template-columns:1fr">
+        <div class="card">
+          <div class="card-icon">😔</div>
+          <div class="card-title">Overwhelmed / Exhausted — 14%</div>
+          <div class="card-body">Managing a property alone after loss is physically and mentally draining. 14% explicitly express being overwhelmed or exhausted — and these are the calls where empathy from the agent makes the biggest difference.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🏥</div>
+          <div class="card-title">Own Health Issues — 16%</div>
+          <div class="card-body">1 in 6 sellers in this group is also dealing with their own health decline — often elderly, dealing with mobility, or newly diagnosed. The death of a spouse accelerated their timeline.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">💭</div>
+          <div class="card-title">Too Many Memories — 4%</div>
+          <div class="card-body">Explicitly cited as a reason to sell — "I can't be in this house anymore, it reminds me of him/her everywhere I look." Rare in the data but when present, it's the primary emotional driver.</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="quote-block">
+        <div class="tag">SELLER</div>
+        "i like the house but my wife passed away almost four years ago and i don't need this house it's too big for just me"
+      </div>
+      <div class="quote-block">
+        <div class="tag">SELLER</div>
+        "i i had the papers ready to be signed and it was just too soon after my wife had passed away and i just — i couldn't sell at that time... i'm still going"
+      </div>
+      <div class="quote-block">
+        <div class="tag">SELLER</div>
+        "i lost my husband twenty three years ago and so i've been taking care of it and i'm getting too old — i'm going to be eighty nine this year... it's just getting too much"
+      </div>
+      <div class="quote-block">
+        <div class="tag">SELLER</div>
+        "i lost my son to cancer... the basement is the least thing you know. it has a ceiling but it's old. i'll be honest with you."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6 — MOTIVATIONS FROM STRUCTURED DATA -->
+<div class="slide" id="s6">
+  <h3>Structured Motivations</h3>
+  <h2>Primary Motivations — From the CRM Data</h2>
+  <p>What was captured as the primary motivation in the contracts file for these 190 calls</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Motivation Cluster</th><th>Key Pattern</th><th>Example from Data</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Estate liquidation / probate</strong></td><td><span class="pill pill-rose">Most common</span></td><td style="font-size:.8rem;color:#9aa0b8">"Inherited 4 properties as sole trustee after friend passed — overwhelmed, wants simple liquidation"</td></tr>
+        <tr><td><strong>Can't manage alone / burden removed</strong></td><td><span class="pill pill-rose">High</span></td><td style="font-size:.8rem;color:#9aa0b8">"Financial hardship + emotional overload — rental property she can't manage after husband's death"</td></tr>
+        <tr><td><strong>Elderly + downsizing + fixed income</strong></td><td><span class="pill pill-amber">Frequent</span></td><td style="font-size:.8rem;color:#9aa0b8">"Elderly (81), widowed, alone — wants less responsibility, wants to rent smaller place and have freedom"</td></tr>
+        <tr><td><strong>Health decline driving sale</strong></td><td><span class="pill pill-amber">Frequent</span></td><td style="font-size:.8rem;color:#9aa0b8">"Wants to relocate to live with daughter due to medical issues and be free of maintenance and tax burden"</td></tr>
+        <tr><td><strong>Inherited distressed property</strong></td><td><span class="pill pill-teal">Moderate</span></td><td style="font-size:.8rem;color:#9aa0b8">"Inherited property with reverse mortgage and looming foreclosure deadline"</td></tr>
+        <tr><td><strong>Emotional — can't live there anymore</strong></td><td><span class="pill pill-teal">Moderate</span></td><td style="font-size:.8rem;color:#9aa0b8">"Emotional difficulty living there after husband passed — house now vacant, wants someone to use it"</td></tr>
+        <tr><td><strong>Dementia / caregiving situation</strong></td><td><span class="pill pill-teal">Moderate</span></td><td style="font-size:.8rem;color:#9aa0b8">"Father has dementia, son is working full-time and managing care — wants to simplify and help father with dignity"</td></tr>
+        <tr><td><strong>As-is, fast, done with it</strong></td><td><span class="pill pill-teal">Moderate</span></td><td style="font-size:.8rem;color:#9aa0b8">"Wants simple fast as-is sale without putting more money into the property — just wants to be done"</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout teal" style="margin-top:12px">
+    <div class="callout-icon">⏱️</div>
+    <div class="callout-text teal"><strong>Timeline in this segment:</strong> "As soon as possible" and "sooner the better" dominate. When a seller in this group is ready, they want it done fast — often within 30 days. They've usually been sitting on the decision for months and finally called.</div>
+  </div>
+</div>
+
+<!-- SLIDE 7 — THE TWO SELLER TYPES -->
+<div class="slide" id="s7">
+  <h3>Seller Profiles</h3>
+  <h2>Two Distinct Seller Types in This Segment</h2>
+  <div class="two-col">
+    <div>
+      <div class="card rose" style="margin-bottom:14px">
+        <div class="card-icon">👩‍🦳</div>
+        <div class="card-title">Type A — The Surviving Spouse</div>
+        <div class="card-body" style="font-size:.85rem">
+          <strong style="color:#fff">Profile:</strong> Widowed, older (60s–80s), lived in the home for 15–30+ years<br><br>
+          <strong style="color:#fff">Signals:</strong> Can't maintain alone · too big now · fixed income · memories · own health declining<br><br>
+          <strong style="color:#fff">What they need:</strong> Emotional validation first, then practical reassurance. They're not just selling a house — they're closing a chapter of their life. Speed matters but so does feeling respected.<br><br>
+          <strong style="color:#fff">Key phrase pattern:</strong> "I lost my husband/wife... and I just can't do it anymore / it's too big for just me / I need to move on"
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="card teal" style="margin-bottom:14px">
+        <div class="card-icon">👨‍💼</div>
+        <div class="card-title">Type B — The Heir / Estate Manager</div>
+        <div class="card-body" style="font-size:.85rem">
+          <strong style="color:#fff">Profile:</strong> Adult child, sibling, or niece/nephew — often managing from a distance<br><br>
+          <strong style="color:#fff">Signals:</strong> Probate / estate · rental property · doesn't live there · wants simple as-is · sometimes multiple heirs / decision makers<br><br>
+          <strong style="color:#fff">What they need:</strong> Speed and simplicity. They're not emotionally attached to the property — they want it gone cleanly. Process clarity matters more than empathy here.<br><br>
+          <strong style="color:#fff">Key phrase pattern:</strong> "My [parent/uncle/relative] passed... I'm managing the estate / I don't live there / I want an easy sale"
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="callout">
+    <div class="callout-icon">🎯</div>
+    <div class="callout-text"><strong>Why this split matters for calls:</strong> Opening with heavy emotional empathy to a Type B heir who's in business-mode will slow the call down. And opening with process/speed talk to a Type A widow who's still grieving will feel cold and transactional. Read which type you're talking to in the first 60 seconds.</div>
+  </div>
+</div>
+
+<!-- SLIDE 8 — ALL SELLER QUOTES PART 1 -->
+<div class="slide" id="s8">
+  <h3>All Seller Quotes — Part 1 of 3</h3>
+  <h2>Every Quote Mentioning Spouse / Partner Passed</h2>
+  <p class="sub">163 unique seller quotes extracted from 190 transcripts · Verbatim from call recordings</p>
+  <div class="quote-grid">
+    <div class="q-mini"><div class="q-num">S1</div>"i lost my husband two years ago"</div>
+    <div class="q-mini"><div class="q-num">S2</div>"my husband bought him that car for his birthday this december before my husband passed away that march"</div>
+    <div class="q-mini"><div class="q-num">S3</div>"she passed away about a year and..."</div>
+    <div class="q-mini"><div class="q-num">S4</div>"i'm just wanting to sell it because my husband passed away almost two years ago and i can't live in the house anymore so i want somebody to be able to get use out of it instead of it sitting there"</div>
+    <div class="q-mini"><div class="q-num">S5</div>"even before my husband passed he could not believe — he said you love going to school every day, i've never saw somebody who loves dealing with..."</div>
+    <div class="q-mini"><div class="q-num">S6</div>"my uncle was eighty two years old when he passed away the last two years he didn't do any major maintenance — there are soft areas that do need some work, there is potential mold..."</div>
+    <div class="q-mini"><div class="q-num">S7</div>"immediately after he passed away i did go into probate court and file to become the administrator"</div>
+    <div class="q-mini"><div class="q-num">S8</div>"his wife has passed away"</div>
+    <div class="q-mini"><div class="q-num">S9</div>"my dad was the cosigner but he passed away like five years ago"</div>
+    <div class="q-mini"><div class="q-num">S11</div>"i lost my wife a couple years ago and there's nobody here but me so... i'm trying to downsize"</div>
+    <div class="q-mini"><div class="q-num">S12</div>"my daughter owned it and she passed away the other day and so i am the new owner"</div>
+    <div class="q-mini"><div class="q-num">S14</div>"he passed away last year"</div>
+    <div class="q-mini"><div class="q-num">S15</div>"my great uncle was eighty-eight and he passed and it was given to me — i don't live there, i'm about four hours away but i've kept the property since probate was finished in september"</div>
+    <div class="q-mini"><div class="q-num">S17</div>"william was working on getting the sewer system replaced but since he passed he couldn't finish it — i had a plumber come over, they were gonna do it for me but i said i probably just sell it"</div>
+    <div class="q-mini"><div class="q-num">S18</div>"he passed on january the twelfth and he left me all this stuff and after the holidays i have to start dealing with this"</div>
+    <div class="q-mini"><div class="q-num">S20</div>"she and her late husband bought it... she borrowed money to remodel it. she has a son... it's not in the best condition"</div>
+  </div>
+</div>
+
+<!-- SLIDE 9 — ALL SELLER QUOTES PART 2 -->
+<div class="slide" id="s9">
+  <h3>All Seller Quotes — Part 2 of 3</h3>
+  <h2>Verbatim Seller Quotes Continued</h2>
+  <div class="quote-grid">
+    <div class="q-mini"><div class="q-num">S21</div>"we're in the process of inheriting a house — terry bernstein is the titled owner, he is deceased, he passed away in twenty twenty three and we're taking possession"</div>
+    <div class="q-mini"><div class="q-num">S23</div>"i lost my husband unexpectedly last year at the age of forty eight, i have two kids — there was a home equity loan i had no idea about, they tried to foreclose on me for twenty thousand dollars"</div>
+    <div class="q-mini"><div class="q-num">S24</div>"it was my whole life — i just never thought i'd be a widow at forty six. forty four when he died though."</div>
+    <div class="q-mini"><div class="q-num">S25</div>"my father passed away in may so it's been vacant since he passed away at the hospital — the gas has been shut off, the water has been shut off, there's nothing in there"</div>
+    <div class="q-mini"><div class="q-num">S26</div>"because i lost my husband"</div>
+    <div class="q-mini"><div class="q-num">S28</div>"after he passed — my father had just two children, myself and my sister. he didn't have a will so we are his only relatives. my sister and i came to a decision that i would facilitate the probate process"</div>
+    <div class="q-mini"><div class="q-num">S29</div>"my uncle passed away this year — he was a hundred and one years old... and that was his unit"</div>
+    <div class="q-mini"><div class="q-num">S30</div>"my husband died two years ago"</div>
+    <div class="q-mini"><div class="q-num">S33</div>"when i moved here i was with my boyfriend and it's too far away from my kids — i wanna move back closer to them. he passed away so that's the reason i moved down here was to be with him"</div>
+    <div class="q-mini"><div class="q-num">S34</div>"i'm moving in with my sister — her husband passed away six months ago, my twin sister"</div>
+    <div class="q-mini"><div class="q-num">S36</div>"she passed away actually in october but there was some issues with her brother didn't wanna be executor of the will — anyway long story, we're working with a lawyer"</div>
+    <div class="q-mini"><div class="q-num">S41</div>"after he passed she was going in on the rent a little bit but after she passed she felt she didn't really owe anything... we've had agreements along the line but she didn't hold up to anything"</div>
+    <div class="q-mini"><div class="q-num">S44</div>"i like the house but my wife passed away almost four years ago and i don't need this house — it's too big for just me"</div>
+    <div class="q-mini"><div class="q-num">S45</div>"i had the papers ready to be signed and it was just too soon after my wife had passed away — i couldn't sell at that time. i hated backing out at the last minute but it was too soon... i'm still going through it"</div>
+    <div class="q-mini"><div class="q-num">S46</div>"the other bathroom we started not long before my wife passed away and then after she passed i just kind of stopped working on it — the plumbing's all ran, the tub is there..."</div>
+    <div class="q-mini"><div class="q-num">S49</div>"i retired at sixty two from the hospital and then my husband passed in nineteen... and i took over"</div>
+  </div>
+</div>
+
+<!-- SLIDE 10 — ALL SELLER QUOTES PART 3 -->
+<div class="slide" id="s10">
+  <h3>All Seller Quotes — Part 3 of 3</h3>
+  <h2>Verbatim Seller Quotes Continued</h2>
+  <div class="quote-grid">
+    <div class="q-mini"><div class="q-num">S50</div>"i'm seventy four years old and i've been looking at selling... my youngest daughter... i'm looking at two things and we've talked about it — you know and stuff"</div>
+    <div class="q-mini"><div class="q-num">S51</div>"i had a son that had the third bedroom and he passed a year ago in may so that room is just empty"</div>
+    <div class="q-mini"><div class="q-num">S55</div>"her and her husband but her husband passed away three years ago i believe it was twenty twenty two"</div>
+    <div class="q-mini"><div class="q-num">S57</div>"before you get into too much — when my husband passed away i had to refinance my house. that's been a while but i'm still making payments, always up to date, no late payments, but i do still owe between fifty seven and sixty thousand on it"</div>
+    <div class="q-mini"><div class="q-num">S58</div>"i lost my husband twenty three years ago and so i've been taking care of it and i'm getting too old — i'm going to be eighty nine this year in a month or so. it's just getting too much for me to take care of. i've got a daughter that lives with me she's sixty six but she's sort of disabled"</div>
+    <div class="q-mini"><div class="q-num">S59</div>"after my husband passed and i lost my son to cancer i just — the basement is the least thing you know"</div>
+    <div class="q-mini"><div class="q-num">S60</div>"the windows were bought right before my husband passed so they're about twenty years old"</div>
+    <div class="q-mini"><div class="q-num">S38</div>"the property was my father's — unfortunately he passed away earlier this year and we've been going through the process because he did not name me the executor of his estate and that has finally been finished"</div>
+    <div class="q-mini"><div class="q-num">S40</div>"my mom lived here and she passed away"</div>
+    <div class="q-mini"><div class="q-num">S42</div>"i've been the owner since he passed — he had the house for almost ten years, the house is completely paid off, i have all the papers"</div>
+    <div class="q-mini"><div class="q-num">S48</div>"it was me and my husband — my husband passed"</div>
+    <div class="q-mini"><div class="q-num">S52</div>"yes she passed away in september"</div>
+    <div class="q-mini"><div class="q-num">S53</div>"my mother passed in twenty three — she had it done before she passed"</div>
+    <div class="q-mini"><div class="q-num">S54</div>"i wanted to talk to someone about getting a quote — our aunt's house, she passed away in january of this year and we have her property and we need to sell it"</div>
+    <div class="q-mini"><div class="q-num">S56</div>"he passed away three years ago — i don't know if that counts... if we could still do a walk through this weekend that'd be great"</div>
+    <div class="q-mini"><div class="q-num">S31</div>"i am sixty eight years old — i put my daughter's name behind mine after my wife died so if i died you know it wouldn't just sit there"</div>
+  </div>
+</div>
+
+<!-- SLIDE 11 — KEY TAKEAWAYS -->
+<div class="slide" id="s11">
+  <h3>Key Takeaways</h3>
+  <h2>What the Data Tells You About This Segment</h2>
+  <div class="cards">
+    <div class="card rose">
+      <div class="card-icon">📌</div>
+      <div class="card-title">16.5% of all contract calls = significant volume</div>
+      <div class="card-body">This isn't a rare edge case. Nearly 1 in 6 contracts involves a seller where a spouse or partner has passed. It's a core seller profile that deserves a specific call script and approach.</div>
+    </div>
+    <div class="card rose">
+      <div class="card-icon">🔑</div>
+      <div class="card-title">Top co-reason: estate/inherited (57%)</div>
+      <div class="card-body">The majority are not the widow/widower — they're managing someone else's estate. The emotional weight is different. The urgency is practical: close probate, liquidate, move on.</div>
+    </div>
+    <div class="card amber">
+      <div class="card-icon">💰</div>
+      <div class="card-title">Financial pressure is almost always present</div>
+      <div class="card-body">Fixed income (22%), behind on bills (18%), foreclosure risk (8%) — loss of a spouse very often comes with loss of income or the person who managed the finances. Money pressure is almost always in the background.</div>
+    </div>
+    <div class="card teal">
+      <div class="card-icon">✅</div>
+      <div class="card-title">55% are ready for a fresh start</div>
+      <div class="card-body">More than half explicitly signal they're ready to move forward. This is not a group of sellers who need to be persuaded to sell — they've already decided. The job is to make it feel safe and simple.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🗣️</div>
+      <div class="card-title">Read the type before you frame the pitch</div>
+      <div class="card-body">Surviving spouse (Type A) needs empathy first, then process. Estate manager/heir (Type B) needs speed and simplicity first. One approach does not fit both.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">⏰</div>
+      <div class="card-title">Timeline is urgent when they call</div>
+      <div class="card-body">"As soon as possible" and "sooner the better" dominate the timeframe data. When this seller finally calls, they've been sitting on the decision for a while. Don't let the call end without a concrete next step.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <span class="slide-counter" id="ctr">1 / 11</span>
+  <button onclick="go(1)">Next →</button>
+</div>
+
+<script>
+const N=11;let cur=0;
+const slides=document.querySelectorAll('.slide');
+const ctr=document.getElementById('ctr');
+const prog=document.getElementById('progress');
+function show(i){
+  slides[cur].classList.remove('active');
+  cur=(i+N)%N;
+  slides[cur].classList.add('active');
+  ctr.textContent=(cur+1)+' / '+N;
+  prog.style.width=((cur+1)/N*100)+'%';
+}
+function go(d){show(cur+d);}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')go(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(-1);
+});
+</script>
+</body>
+</html>
