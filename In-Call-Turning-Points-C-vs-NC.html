@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>In-Call Turning Points — Contracts vs No-Contracts</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#060608; color:#e0e0f0; height:100vh; overflow:hidden; }
+
+#pb { position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,#f59e0b,#ef4444,#8b5cf6); transition:width .4s; z-index:100; }
+
+.deck { width:100%; height:100vh; position:relative; }
+.slide { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:40px 60px; opacity:0; transform:translateX(55px); transition:opacity .42s,transform .42s; pointer-events:none; }
+.slide.active { opacity:1; transform:none; pointer-events:all; }
+.slide.exit   { opacity:0; transform:translateX(-55px); }
+
+#nav { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); display:flex; gap:10px; align-items:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); backdrop-filter:blur(12px); border-radius:40px; padding:8px 18px; z-index:50; }
+#nav button { background:none; border:none; color:#888; font-size:16px; cursor:pointer; padding:3px 8px; border-radius:8px; transition:color .2s,background .2s; }
+#nav button:hover { color:#fff; background:rgba(255,255,255,0.09); }
+#sc { font-size:12px; color:#555; min-width:52px; text-align:center; }
+#hint { position:fixed; bottom:22px; right:26px; font-size:11px; color:#2a2a2a; }
+
+/* TYPOGRAPHY */
+.ey { font-size:11px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:#f59e0b; margin-bottom:11px; }
+h1 { font-size:clamp(30px,3.8vw,50px); font-weight:800; line-height:1.1; letter-spacing:-1px; text-align:center; background:linear-gradient(130deg,#fff 30%,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:14px; }
+h2 { font-size:clamp(20px,2.6vw,36px); font-weight:800; line-height:1.15; letter-spacing:-.5px; margin-bottom:20px; text-align:center; }
+.a  { color:#f59e0b; }
+.a2 { color:#8b5cf6; }
+.a3 { color:#22c55e; }
+.a4 { color:#ef4444; }
+.sub { font-size:15px; color:#666; text-align:center; max-width:700px; line-height:1.65; margin-bottom:16px; }
+.div { width:50px; height:3px; background:linear-gradient(90deg,#f59e0b,#ef4444); border-radius:2px; margin:12px auto 20px; }
+
+/* CARDS */
+.card  { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:13px; padding:17px 19px; }
+.amber { background:rgba(245,158,11,0.09); border-color:rgba(245,158,11,0.26); }
+.green { background:rgba(34,197,94,0.07); border-color:rgba(34,197,94,0.2); }
+.purple{ background:rgba(139,92,246,0.09); border-color:rgba(139,92,246,0.26); }
+.red   { background:rgba(239,68,68,0.07); border-color:rgba(239,68,68,0.2); }
+.cl   { font-size:10.5px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; color:#444; margin-bottom:7px; }
+.cl.a { color:#c47f00; } .cl.g { color:#15803d; } .cl.r { color:#b91c1c; } .cl.p { color:#6d28d9; }
+.ct { font-size:14.5px; font-weight:700; color:#e0e0f0; margin-bottom:5px; }
+.cb { font-size:13px; color:#666; line-height:1.55; }
+.cv { font-size:30px; font-weight:800; letter-spacing:-1px; }
+
+/* GRID */
+.g  { display:grid; gap:12px; width:100%; }
+.c2 { grid-template-columns:1fr 1fr; }
+.c3 { grid-template-columns:1fr 1fr 1fr; }
+.c4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+.mx { max-width:1100px; }
+.mx9{ max-width:960px; }
+
+/* TABLE */
+table { width:100%; border-collapse:collapse; font-size:13.5px; }
+th { text-align:left; font-size:10px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; color:#3a3a4a; padding:0 10px 8px; border-bottom:1px solid rgba(255,255,255,0.06); }
+th.r { text-align:right; }
+td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.035); color:#bbb; vertical-align:middle; }
+td.r { text-align:right; } td.b { font-weight:700; color:#e0e0f0; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(255,255,255,0.02); }
+
+/* BADGE */
+.b  { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11.5px; font-weight:600; }
+.b.a{ background:rgba(245,158,11,0.18); color:#fbbf24; }
+.b.g{ background:rgba(34,197,94,0.15); color:#4ade80; }
+.b.gr{background:rgba(255,255,255,0.07); color:#555; }
+.b.r{ background:rgba(239,68,68,0.15); color:#f87171; }
+.b.p{ background:rgba(139,92,246,0.18); color:#a78bfa; }
+.b.bl{background:rgba(59,130,246,0.15); color:#60a5fa; }
+
+/* CONVERSATION */
+.conv { width:100%; max-width:1000px; margin-bottom:10px; }
+.ca { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.14); border-radius:12px 12px 0 0; padding:10px 15px; }
+.cs { background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.14); border-left:3px solid #22c55e; border-radius:0 0 12px 12px; padding:10px 15px; margin-top:1px; }
+.clb { font-size:10px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:4px; }
+.clb.agent  { color:#c47f00; } .clb.seller { color:#15803d; }
+.ct2 { font-size:13.5px; color:#ccc; line-height:1.6; font-style:italic; }
+.cm  { font-size:10px; color:#3a3a3a; float:right; }
+em.h { font-style:normal; background:rgba(245,158,11,0.2); color:#fde68a; padding:0 3px; border-radius:3px; }
+em.r { font-style:normal; background:rgba(239,68,68,0.18); color:#fca5a5; padding:0 3px; border-radius:3px; }
+
+.cc { display:grid; grid-template-columns:1fr 1fr; gap:11px; width:100%; max-width:1100px; }
+
+/* STAT ROW */
+.sr { display:flex; gap:12px; width:100%; max-width:980px; margin-bottom:20px; }
+.sb { flex:1; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:12px; padding:15px 17px; text-align:center; }
+.sb .big { font-size:28px; font-weight:800; letter-spacing:-1px; }
+.sb .lbl { font-size:11px; color:#444; margin-top:3px; }
+
+/* BAR */
+.br { display:flex; align-items:center; gap:10px; margin:5px 0; }
+.bl2{ width:200px; font-size:12.5px; color:#999; flex-shrink:0; }
+.bt { flex:1; height:7px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+.bf { height:100%; border-radius:4px; }
+.bf.a{ background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+.bf.g{ background:linear-gradient(90deg,#22c55e,#4ade80); }
+.bf.p{ background:linear-gradient(90deg,#8b5cf6,#a78bfa); }
+.bf.r{ background:linear-gradient(90deg,#ef4444,#f87171); }
+.bp { font-size:11.5px; color:#444; width:36px; text-align:right; }
+
+/* INSIGHT */
+.ins { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.2); border-radius:12px; padding:15px 18px; width:100%; max-width:900px; margin-top:13px; }
+.il  { font-size:10px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:#c47f00; margin-bottom:5px; }
+.it  { font-size:14px; color:#ccc; line-height:1.55; }
+
+/* FUNNEL */
+.fl  { display:flex; align-items:center; gap:9px; margin:7px 0; width:100%; max-width:900px; }
+.fb  { flex:1; border-radius:9px; padding:9px 14px; font-size:12.5px; text-align:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); color:#ccc; }
+.fb.a{ background:rgba(245,158,11,0.09); border-color:rgba(245,158,11,0.22); color:#fbbf24; font-weight:600; }
+.fb.g{ background:rgba(34,197,94,0.09); border-color:rgba(34,197,94,0.22); color:#4ade80; font-weight:600; }
+.far { color:#333; font-size:16px; flex-shrink:0; }
+
+.tag-row { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; margin-top:7px; }
+.tag  { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:4px 11px; font-size:12px; color:#777; }
+.tag.a{ background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.22); color:#c47f00; }
+
+.title-bg { background:radial-gradient(ellipse 80% 50% at 50% 28%,rgba(245,158,11,0.13) 0%,transparent 68%); }
+
+/* DUAL BAR */
+.db-wrap { width:100%; max-width:900px; }
+.db-row  { display:flex; align-items:center; gap:10px; margin:6px 0; }
+.db-label{ width:220px; font-size:12.5px; color:#aaa; flex-shrink:0; }
+.db-bars { flex:1; display:flex; flex-direction:column; gap:3px; }
+.db-bar  { height:6px; border-radius:3px; position:relative; }
+.db-bar.a{ background:linear-gradient(90deg,#f59e0b88,#f59e0b); }
+.db-bar.g{ background:linear-gradient(90deg,#22c55e55,#22c55e88); }
+.db-pcts { display:flex; gap:8px; }
+.db-pct  { font-size:11px; font-weight:600; }
+.db-pct.a{ color:#f59e0b; }
+.db-pct.g{ color:#22c55e; }
+.db-gap  { font-size:11.5px; font-weight:700; width:44px; text-align:right; color:#4ade80; }
+
+.full { width:100%; max-width:1100px; }
+</style>
+</head>
+<body>
+
+<div id="pb"></div>
+<div class="deck" id="deck">
+
+<!-- ══ SLIDE 1 — TITLE ══════════════════════════════════════════════════════ -->
+<div class="slide title-bg active">
+  <div class="ey">Doctor Homes — 7,354 Calls Analyzed</div>
+  <h1>What Happens In The Call<br>That Makes the Difference?</h1>
+  <div class="sub">Contracts vs No-Contracts: comparing seller signals, agent moves, and<br>conversational moments that separate deals that closed from ones that didn't.</div>
+  <div class="div"></div>
+  <div class="tag-row">
+    <span class="tag a">1,153 contracts</span>
+    <span class="tag a">393 closed · 531 dead</span>
+    <span class="tag">6,201 no-contracts</span>
+    <span class="tag">8 markets</span>
+    <span class="tag">Speaker-level analysis</span>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2 — BIG PICTURE ════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Overview</div>
+  <h2>The <span class="a">Single Biggest</span> In-Call Difference</h2>
+  <div class="sub" style="margin-bottom:26px;">One signal dominates everything else. The "Moving Forward" signal — when a seller says "sounds good / okay that works / let's do it" — appears in 54% of contract calls vs only 44% of no-contract calls.</div>
+
+  <div class="sr">
+    <div class="sb" style="border-color:rgba(245,158,11,.3)">
+      <div class="big" style="color:#fbbf24">54%</div>
+      <div class="lbl">Contracts — seller said "sounds good / okay / let's do it"</div>
+    </div>
+    <div class="sb">
+      <div class="big">44%</div>
+      <div class="lbl">No-Contracts — same signal</div>
+    </div>
+    <div class="sb" style="border-color:rgba(34,197,94,.25)">
+      <div class="big" style="color:#4ade80">+10pp</div>
+      <div class="lbl">Gap — contracts agents get sellers to "yes" 10pp more often</div>
+    </div>
+    <div class="sb" style="border-color:rgba(245,158,11,.25)">
+      <div class="big" style="color:#fbbf24">28%</div>
+      <div class="lbl">Appointment Push gap — contracts agents push for appointment 7pp more</div>
+    </div>
+  </div>
+
+  <div class="ins">
+    <div class="il">The Core Story</div>
+    <div class="it">Contracts calls are not fundamentally different in seller demographics or property type. The difference is <strong style="color:#fbbf24">what agents do in the conversation</strong>. Contracts agents push for appointments more, offer flexibility more, and say "as-is" explicitly more — and they get sellers to say "sounds good" 10 percentage points more often.</div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 3 — SELLER SHIFT TABLE ════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Seller Signals — All 8 Types</div>
+  <h2>What Sellers Say When <span class="a">They Shift</span></h2>
+  <div class="sub" style="margin-bottom:18px;">% of calls where the seller used this signal. Detected in seller speech only (agent turns excluded).</div>
+
+  <div class="full" style="max-width:1020px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Signal Type</th>
+          <th>Example Phrases</th>
+          <th class="r">Contracts</th>
+          <th class="r">No-Contracts</th>
+          <th class="r">Gap</th>
+          <th class="r">Closed</th>
+          <th class="r">Dead</th>
+          <th class="r">Read</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="b">Moving Forward</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"Sounds good." "Okay that works." "Let's do it."</td>
+          <td class="r"><span class="b a">54%</span></td><td class="r">44%</td>
+          <td class="r"><span class="b g">+10pp</span></td>
+          <td class="r">54%</td><td class="r">52%</td>
+          <td class="r"><span class="b a">⭐ Primary</span></td>
+        </tr>
+        <tr>
+          <td class="b">Price Acceptance</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"I can work with that." "That's fair." "I'd take it."</td>
+          <td class="r"><span class="b a">12%</span></td><td class="r">8%</td>
+          <td class="r"><span class="b g">+4pp</span></td>
+          <td class="r">10%</td><td class="r">12%</td>
+          <td class="r"><span class="b bl">✓ But higher in Dead</span></td>
+        </tr>
+        <tr>
+          <td class="b">Curiosity / Questions</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"How does this work?" "How long does it take?"</td>
+          <td class="r"><span class="b a">11%</span></td><td class="r">9%</td>
+          <td class="r"><span class="b g">+2pp</span></td>
+          <td class="r">9%</td><td class="r">13%</td>
+          <td class="r"><span class="b r">⚠ Dead > Closed</span></td>
+        </tr>
+        <tr>
+          <td class="b">Trust Signal</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"I like the way you talk." "You seem honest."</td>
+          <td class="r">6%</td><td class="r">5%</td>
+          <td class="r"><span class="b gr">+1pp</span></td>
+          <td class="r">5%</td><td class="r">6%</td>
+          <td class="r"><span class="b gr">↔ Neutral</span></td>
+        </tr>
+        <tr>
+          <td class="b">Opening Up / Venting</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"Let me tell you the real reason…"</td>
+          <td class="r">6%</td><td class="r">5%</td>
+          <td class="r"><span class="b gr">+1pp</span></td>
+          <td class="r">8%</td><td class="r">6%</td>
+          <td class="r"><span class="b gr">Neutral overall</span></td>
+        </tr>
+        <tr>
+          <td class="b">Letting Go</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"Just be done with it." "Don't need the hassle."</td>
+          <td class="r"><span class="b a">4%</span></td><td class="r">1%</td>
+          <td class="r"><span class="b g">+3pp</span></td>
+          <td class="r">5%</td><td class="r">4%</td>
+          <td class="r"><span class="b g">✓ High-intent</span></td>
+        </tr>
+        <tr>
+          <td class="b">Scheduling Agreement</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"You can come out." "When can you come by?"</td>
+          <td class="r">3%</td><td class="r">2%</td>
+          <td class="r"><span class="b g">+1pp</span></td>
+          <td class="r">3%</td><td class="r">2%</td>
+          <td class="r"><span class="b g">✓ Converts</span></td>
+        </tr>
+        <tr>
+          <td class="b">Process Relief</td>
+          <td style="color:#666;font-style:italic;font-size:12px">"Oh I didn't know I don't have to fix it."</td>
+          <td class="r">2%</td><td class="r">1%</td>
+          <td class="r"><span class="b g">+1pp</span></td>
+          <td class="r">2%</td><td class="r">2%</td>
+          <td class="r"><span class="b gr">Rare but real</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="ins" style="max-width:1020px;">
+    <div class="il">Counterintuitive</div>
+    <div class="it"><strong style="color:#fbbf24">Price Acceptance</strong> is higher in Dead deals (12%) than Closed (10%) — sellers who verbally say "that's fair" often don't end up closing. <strong style="color:#fbbf24">Curiosity/Questions</strong> is higher in Dead (13%) vs Closed (9%). Sellers asking a lot of questions are evaluating options, not committing.</div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 4 — AGENT MOVES TABLE ════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Agent Moves — Full Comparison</div>
+  <h2><span class="a">Agent Behaviors</span> That Separate Contracts From No-Contracts</h2>
+  <div class="sub" style="margin-bottom:16px;">% of calls where agent used each move anywhere in the conversation.</div>
+
+  <div class="full" style="max-width:1020px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Agent Move</th>
+          <th class="r">C%</th>
+          <th class="r">NC%</th>
+          <th class="r">C vs NC</th>
+          <th class="r">Closed%</th>
+          <th class="r">Dead%</th>
+          <th class="r">CL vs D</th>
+          <th class="r">Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="b">Appointment Push</td>
+          <td class="r"><span class="b a">28%</span></td><td class="r">21%</td>
+          <td class="r"><span class="b g">+7pp</span></td>
+          <td class="r"><span class="b g">30%</span></td><td class="r">25%</td>
+          <td class="r"><span class="b g">+5pp</span></td>
+          <td class="r"><span class="b a">⭐ Double winner</span></td>
+        </tr>
+        <tr>
+          <td class="b">No Repairs Needed</td>
+          <td class="r"><span class="b a">18%</span></td><td class="r">14%</td>
+          <td class="r"><span class="b g">+4pp</span></td>
+          <td class="r">20%</td><td class="r">16%</td>
+          <td class="r"><span class="b g">+4pp</span></td>
+          <td class="r"><span class="b g">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td class="b">Offer / Price Mentioned</td>
+          <td class="r"><span class="b a">16%</span></td><td class="r">12%</td>
+          <td class="r"><span class="b g">+4pp</span></td>
+          <td class="r">15%</td><td class="r">17%</td>
+          <td class="r"><span class="b r">−2pp</span></td>
+          <td class="r"><span class="b bl">C>NC but Dead>CL</span></td>
+        </tr>
+        <tr>
+          <td class="b">Empathy Before Business</td>
+          <td class="r">7%</td><td class="r">4%</td>
+          <td class="r"><span class="b g">+3pp</span></td>
+          <td class="r">8%</td><td class="r">5%</td>
+          <td class="r"><span class="b g">+3pp</span></td>
+          <td class="r"><span class="b g">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td class="b">"As-Is" Explicit</td>
+          <td class="r">17%</td><td class="r">14%</td>
+          <td class="r"><span class="b g">+3pp</span></td>
+          <td class="r">20%</td><td class="r">15%</td>
+          <td class="r"><span class="b g">+5pp</span></td>
+          <td class="r"><span class="b g">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td class="b">Flexible Timeline</td>
+          <td class="r">9%</td><td class="r">7%</td>
+          <td class="r"><span class="b g">+2pp</span></td>
+          <td class="r"><span class="b g">13%</span></td><td class="r">6%</td>
+          <td class="r"><span class="b g">+7pp</span></td>
+          <td class="r"><span class="b a">⭐ Closes deals</span></td>
+        </tr>
+        <tr>
+          <td class="b">Tell Me More (Discovery)</td>
+          <td class="r">31%</td><td class="r">29%</td>
+          <td class="r"><span class="b g">+2pp</span></td>
+          <td class="r">33%</td><td class="r">29%</td>
+          <td class="r"><span class="b g">+4pp</span></td>
+          <td class="r"><span class="b g">✓ Consistent</span></td>
+        </tr>
+        <tr>
+          <td class="b">Cash / No Lender</td>
+          <td class="r">22%</td><td class="r">20%</td>
+          <td class="r"><span class="b g">+2pp</span></td>
+          <td class="r">22%</td><td class="r">21%</td>
+          <td class="r"><span class="b gr">+1pp</span></td>
+          <td class="r"><span class="b gr">↔ Table stakes</span></td>
+        </tr>
+        <tr>
+          <td class="b">Seller Controls Close</td>
+          <td class="r">3%</td><td class="r">2%</td>
+          <td class="r"><span class="b g">+1pp</span></td>
+          <td class="r"><span class="b g">5%</span></td><td class="r">2%</td>
+          <td class="r"><span class="b g">+3pp</span></td>
+          <td class="r"><span class="b g">✓ Underused</span></td>
+        </tr>
+        <tr>
+          <td class="b">"Process Is Simple" Frame</td>
+          <td class="r">15%</td><td class="r">15%</td>
+          <td class="r"><span class="b gr">0pp</span></td>
+          <td class="r">18%</td><td class="r">13%</td>
+          <td class="r"><span class="b g">+5pp</span></td>
+          <td class="r"><span class="b bl">No C/NC gap — but CL>D</span></td>
+        </tr>
+        <tr>
+          <td class="b">We Pay Closing Costs</td>
+          <td class="r">3%</td><td class="r">2%</td>
+          <td class="r"><span class="b g">+1pp</span></td>
+          <td class="r">4%</td><td class="r">3%</td>
+          <td class="r"><span class="b gr">+1pp</span></td>
+          <td class="r"><span class="b gr">↔ Minor</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ SLIDE 5 — APPOINTMENT PUSH ══════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Agent Move #1 — The Double Winner</div>
+  <h2><span class="a">Appointment Push</span> — +7pp C vs NC, +5pp CL vs Dead</h2>
+  <div class="sub" style="margin-bottom:20px;">28% of contract calls vs 21% of no-contract calls. <em>And</em> 30% of Closed deals vs 25% of Dead deals. The only agent move that wins on BOTH dimensions.</div>
+
+  <div class="cc">
+    <div>
+      <div class="conv">
+        <div class="ca"><div class="clb agent">AGENT — Indianapolis <span class="cm">✅ CLOSED</span></div><div class="ct2">"We had an agent come out and look — he said list for one seventy. But let me tell you <em class="h">what happens after you list it</em>: you pay realtor commissions AND you still have to fix it up. <em class="h">Let me send someone out this week</em> so we can walk it together."</div></div>
+        <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">Okay now when can you send someone?</em>"</div></div>
+      </div>
+      <div class="conv" style="margin-top:10px;">
+        <div class="ca"><div class="clb agent">AGENT — SF Bay Area <span class="cm">✅ CLOSED</span></div><div class="ct2">"I can't give you a number on this call — every house in this area is different. <em class="h">I want to schedule one of our area experts to come walk the property.</em> He's been in this market for years."</div></div>
+        <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">That'd be alright. Sounds good.</em>"</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="conv">
+        <div class="ca"><div class="clb agent">AGENT — SF Bay Area <span class="cm">Contracts</span></div><div class="ct2">"He's the person buying all our houses in San Jose. <em class="h">He can meet you there — I have him available Tuesday at ten.</em> He'll walk through, see the condition, and sit with you to make a fair offer."</div></div>
+        <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">Ten AM Monday works actually for us. Yes.</em>"</div></div>
+      </div>
+      <div class="card amber" style="margin-top:10px;">
+        <div class="cl a">Why Appointment Push Wins Both</div>
+        <div class="cb" style="color:#ddd; font-size:13.5px; line-height:1.65; margin-top:8px;">
+          It's a commitment device. Once a seller agrees to a walkthrough, the deal has momentum. No-contract agents often skip pushing for the visit — they wait for the seller to ask. <strong style="color:#fbbf24">Contract agents create the moment instead of waiting for it.</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ins">
+    <div class="il">The Language Pattern</div>
+    <div class="it">Closed agents say: <strong style="color:#fbbf24">"I have someone in the area" / "Our expert can be there Tuesday" / "Let me schedule the walkthrough."</strong> They name a specific time, a specific person. Dead agents say: "We can set something up." Vague vs concrete = no deal vs deal.</div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 6 — FLEXIBLE TIMELINE ═════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Agent Move #2 — The Close-Specific Unlock</div>
+  <h2><span class="a">Flexible Timeline</span> — Only +2pp C vs NC, but <span class="a3">+7pp</span> Closed vs Dead</h2>
+  <div class="sub" style="margin-bottom:20px;">This move isn't what separates contracts from no-contracts — it's what separates <em>closed</em> deals from dead ones. 13% of Closed calls vs only 6% of Dead calls contain it.</div>
+
+  <div class="g c2 mx9" style="margin-bottom:20px;">
+    <div class="card amber">
+      <div class="cl a">CLOSED (13% of 393 deals)</div>
+      <div class="ct2" style="color:#ddd; margin-top:8px; font-size:13.5px; line-height:1.65; font-style:italic;">
+        "We can be very very flexible on the time frame to close if we agree on the price."<br><br>
+        "You don't have to rush. Could be 30 days, could be 90 — you choose."<br><br>
+        "On your schedule, on your terms."
+      </div>
+    </div>
+    <div class="card red">
+      <div class="cl r">DEAD (only 6% of 531 deals)</div>
+      <div class="ct2" style="color:#ddd; margin-top:8px; font-size:13.5px; line-height:1.65; font-style:italic;">
+        Agents in Dead deals either:<br><br>
+        (a) Never mentioned timeline flexibility, or<br><br>
+        (b) Mentioned it <em>after</em> price, when the seller was already anchored on rejecting the number — too late to dissolve the objection.
+      </div>
+    </div>
+  </div>
+
+  <div class="cc">
+    <div class="conv">
+      <div class="ca"><div class="clb agent">AGENT — SF Bay Area <span class="cm">✅ CLOSED</span></div><div class="ct2">"<em class="h">We can be very very flexible on the time frame.</em> If we reach an agreement — we can give you money at closing, and once you're gone your check is ready."</div></div>
+      <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">Okay that works perfectly. Yes.</em>"</div></div>
+    </div>
+    <div class="conv">
+      <div class="ca"><div class="clb agent">AGENT — Kansas City <span class="cm">✅ CLOSED</span></div><div class="ct2">"We cover fees, commissions, closing costs — and <em class="h">give you that sixty-to-ninety day flexible time frame. You own it until then.</em>"</div></div>
+      <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"Give me your best shot and <em class="h">we'll go from there.</em>"</div></div>
+    </div>
+  </div>
+
+  <div class="ins">
+    <div class="il">Why it closes (but doesn't create) deals</div>
+    <div class="it">Flexible timeline doesn't pull sellers off the fence — it seals deals for sellers already leaning toward yes. The fear of being rushed is the last invisible objection. When it's named and removed, sellers stop stalling. <strong style="color:#fbbf24">Use it after empathy and as-is, not before.</strong></div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 7 — AS-IS + EMPATHY ════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Agent Moves #3 & #4</div>
+  <h2><span class="a">"As-Is"</span> and <span class="a">Empathy</span> — Consistent Across Both Dimensions</h2>
+
+  <div class="g c2 mx" style="max-width:1020px; margin-bottom:20px;">
+    <div class="card amber">
+      <div class="cl a">✅ "As-Is" Explicit — C:17% vs NC:14% (+3pp) | CL:20% vs D:15% (+5pp)</div>
+      <div class="cb" style="color:#ccc; font-size:13.5px; line-height:1.6; margin-top:8px;">Saying "we buy it as-is" out loud cancels the mental repair budget sellers are running. They've been calculating "$15K roof + $8K plumbing..." — the moment they hear "as-is" that math disappears. Works both for getting a contract AND for getting that contract to close.</div>
+    </div>
+    <div class="card amber">
+      <div class="cl a">✅ Empathy Before Business — C:7% vs NC:4% (+3pp) | CL:8% vs D:5% (+3pp)</div>
+      <div class="cb" style="color:#ccc; font-size:13.5px; line-height:1.6; margin-top:8px;">One sentence acknowledging the seller's situation before asking about the house. "Before we talk numbers, I'm sorry to hear that — that sounds like a lot." Contracts agents do this 3pp more. And within contracts, it appears 3pp more in Closed deals.</div>
+    </div>
+  </div>
+
+  <div class="cc">
+    <div class="conv">
+      <div class="ca"><div class="clb agent">AGENT — St. Louis <span class="cm">Contracts</span></div><div class="ct2">"Yeah, that's what we do. We're in the business of buying houses <em class="h">as-is</em> — because Ronald, we have a team that handles all of it."</div></div>
+      <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">I'm open to selling it right away if I can get something I can work with.</em>"</div></div>
+    </div>
+    <div class="conv">
+      <div class="ca"><div class="clb agent">AGENT — SF Bay Area <span class="cm">✅ CLOSED</span></div><div class="ct2">"Eric, <em class="h">before we talk about any business or numbers</em> — I want to tell you I'm sorry for your loss. I know you're going through a lot."</div></div>
+      <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">I appreciate that, Raul. Yeah — let's do this.</em>"</div></div>
+    </div>
+  </div>
+
+  <div class="conv" style="max-width:1020px; margin-top:10px;">
+    <div class="ca"><div class="clb agent">AGENT — Cleveland <span class="cm">Contracts</span></div><div class="ct2">"<em class="h">I understand it can be really tough to hold a property when you live so far away</em>. It's too much just for maintenance. I totally get that, Sharon. If we can present you an offer..."</div></div>
+    <div class="cs"><div class="clb seller">SELLER ↗</div><div class="ct2">"<em class="h">Thirty days would be ideal — I'm just tired of worrying about it.</em> We wanna clean it up some more from the break-in."</div></div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 8 — THE SURPRISES ══════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Counterintuitive Findings</div>
+  <h2>What <span class="a2">Doesn't Work</span> — The Surprises</h2>
+  <div class="sub" style="margin-bottom:20px;">Three things that seem like they'd predict closing — but don't. From the data.</div>
+
+  <div class="g c3 mx" style="max-width:1020px; margin-bottom:22px;">
+    <div class="card red">
+      <div class="cl r">⚠ Curiosity / Questions</div>
+      <div class="cb" style="color:#ddd; font-size:13.5px; line-height:1.65; margin-top:8px;">
+        <strong>"How does this work? What's the process? What's the catch?"</strong><br><br>
+        Appears in <strong style="color:#f87171">13% of Dead deals vs only 9% of Closed</strong>. High-curiosity sellers are shopping or skeptical, not converting. Don't mistake "lots of questions" for "serious interest."
+      </div>
+    </div>
+    <div class="card red">
+      <div class="cl r">⚠ Price Acceptance</div>
+      <div class="cb" style="color:#ddd; font-size:13.5px; line-height:1.65; margin-top:8px;">
+        <strong>"That's fair / I can work with that / That sounds reasonable."</strong><br><br>
+        Appears in <strong style="color:#f87171">12% of Dead deals vs 10% of Closed</strong>. Sellers who verbally accept price don't always close. Often means they're anchoring for a later negotiation.
+      </div>
+    </div>
+    <div class="card red">
+      <div class="cl r">⚠ Offer / Price Mentioned by Agent</div>
+      <div class="cb" style="color:#ddd; font-size:13.5px; line-height:1.65; margin-top:8px;">
+        Agents mentioning a specific $ number appears in <strong style="color:#f87171">17% of Dead deals vs 15% of Closed</strong>. Pricing without prior relationship/empathy creates anchoring and friction. Price is not the unlock — comfort is.
+      </div>
+    </div>
+  </div>
+
+  <div class="g c2 mx9">
+    <div class="card">
+      <div class="cl">Cash / No Lender → Seller Shift (precede analysis)</div>
+      <div class="cb" style="color:#ccc; font-size:13.5px; line-height:1.6; margin-top:8px;">When agent mentions "cash / no lender" right before a seller says "sounds good" — it shows up in <strong style="color:#f87171">7 Dead deals vs only 1 Closed deal</strong>. Relying on "we're cash buyers" as the unlock isn't working. Sellers hear it too much.</div>
+    </div>
+    <div class="card">
+      <div class="cl">Trust Signals Don't Predict Closing</div>
+      <div class="cb" style="color:#ccc; font-size:13.5px; line-height:1.6; margin-top:8px;">"I like the way you talk." "You seem honest." — Appears slightly more in Dead deals (6%) than Closed (5%). <strong>Sellers can like the rep and still not sell.</strong> Warmth enables the conversation; it doesn't close it. Movement does.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 9 — AGENT PHRASE → SHIFT ═══════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Cause → Effect Analysis</div>
+  <h2>Agent Says X → <span class="a">Seller Responds With Willingness</span></h2>
+  <div class="sub" style="margin-bottom:18px;">Cases where we detected an agent phrase and then the very next seller turn contained an openness signal. How many came from contracts vs no-contracts?</div>
+
+  <div class="full" style="max-width:940px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Agent Said This</th>
+          <th class="r">Contracts</th>
+          <th class="r">No-Contracts</th>
+          <th class="r">Closed</th>
+          <th class="r">Dead</th>
+          <th class="r">Read</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="b">Appointment Push</td><td class="r">17</td><td class="r">91</td><td class="r"><span class="b g">7</span></td><td class="r">3</td><td class="r"><span class="b a">High volume, converts in CL</span></td></tr>
+        <tr><td class="b">Cash / No Lender</td><td class="r">11</td><td class="r">62</td><td class="r"><span class="b r">1</span></td><td class="r">7</td><td class="r"><span class="b r">⚠ 7x more Dead than CL</span></td></tr>
+        <tr><td class="b">"Process Is Simple" Frame</td><td class="r">7</td><td class="r">62</td><td class="r">2</td><td class="r">3</td><td class="r"><span class="b gr">Opens call, doesn't close</span></td></tr>
+        <tr><td class="b">No Repairs Needed</td><td class="r">7</td><td class="r">16</td><td class="r">2</td><td class="r">2</td><td class="r"><span class="b g">Balanced — useful</span></td></tr>
+        <tr><td class="b">"As-Is" Explicit</td><td class="r">8</td><td class="r">10</td><td class="r">2</td><td class="r">3</td><td class="r"><span class="b gr">Works, but rare trigger</span></td></tr>
+        <tr><td class="b">Flexible Timeline</td><td class="r">6</td><td class="r">13</td><td class="r"><span class="b g">3</span></td><td class="r">1</td><td class="r"><span class="b g">✓ 3x more CL than Dead</span></td></tr>
+        <tr><td class="b">Offer / Price Mentioned</td><td class="r">3</td><td class="r">16</td><td class="r"><span class="b r">0</span></td><td class="r">3</td><td class="r"><span class="b r">⚠ Zero closed — price triggers Dead</span></td></tr>
+        <tr><td class="b">Tell Me More (Discovery)</td><td class="r">3</td><td class="r">29</td><td class="r">2</td><td class="r">1</td><td class="r"><span class="b g">✓ Good ratio</span></td></tr>
+        <tr><td class="b">Empathy Before Business</td><td class="r">1</td><td class="r">7</td><td class="r"><span class="b g">1</span></td><td class="r">0</td><td class="r"><span class="b g">✓ 100% CL when triggered</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ins">
+    <div class="il">Biggest Surprise</div>
+    <div class="it">
+      <strong style="color:#fbbf24">Price / Offer Mentioned → Seller Shift: 0 Closed, 3 Dead.</strong> When a specific price number from the agent triggers a seller's "sounds good" — it correlates with Dead deals, not Closed ones. This is price-shopping dynamics, not genuine commitment. The number caused a conditional acceptance that later fell through.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 10 — WHAT AGENTS SAY BEFORE SELLER OPENS ══════════════════════ -->
+<div class="slide">
+  <div class="ey">N-Gram Analysis — Agent Language Before Seller Opens</div>
+  <h2>The <span class="a">Exact Phrases</span> Agents Use Before Sellers Say Yes</h2>
+  <div class="sub" style="margin-bottom:22px;">4-word n-gram analysis of agent speech right before sellers expressed willingness. Closed deals vs Dead deals.</div>
+
+  <div class="g c2 mx" style="max-width:1020px;">
+    <div>
+      <div style="font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#c47f00; margin-bottom:14px;">Phrases 3-10× More Common Before Opens in CLOSED Deals</div>
+      <div class="br"><div class="bl2">"ask you few basic questions"</div><div class="bt"><div class="bf a" style="width:100%"></div></div><div class="bp" style="color:#fbbf24">6×</div></div>
+      <div class="br"><div class="bl2">"evaluate the area right here"</div><div class="bt"><div class="bf a" style="width:100%"></div></div><div class="bp" style="color:#fbbf24">6×</div></div>
+      <div class="br"><div class="bl2">"process is very simple"</div><div class="bt"><div class="bf a" style="width:100%"></div></div><div class="bp" style="color:#fbbf24">6×</div></div>
+      <div class="br"><div class="bl2">"hundred and twenty days"</div><div class="bt"><div class="bf a" style="width:95%"></div></div><div class="bp" style="color:#fbbf24">8×</div></div>
+      <div class="br"><div class="bl2">"how soon would you"</div><div class="bt"><div class="bf a" style="width:90%"></div></div><div class="bp" style="color:#fbbf24">6×</div></div>
+      <div class="br"><div class="bl2">"with all the paperwork"</div><div class="bt"><div class="bf a" style="width:90%"></div></div><div class="bp" style="color:#fbbf24">6×</div></div>
+      <div class="br"><div class="bl2">"can structure way that"</div><div class="bt"><div class="bf a" style="width:95%"></div></div><div class="bp" style="color:#fbbf24">8×</div></div>
+      <div class="br"><div class="bl2">"what can offer you"</div><div class="bt"><div class="bf a" style="width:80%"></div></div><div class="bp" style="color:#fbbf24">4×</div></div>
+    </div>
+    <div>
+      <div style="font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:#15803d; margin-bottom:14px;">What These Phrases Mean as a Script Pattern</div>
+      <div class="card green" style="margin-bottom:11px; padding:14px 16px;">
+        <div class="cl g">Pattern 1: Process Frame → Seller Relaxes</div>
+        <div class="ct2" style="color:#ccc; font-size:13px; font-style:normal; line-height:1.6; margin-top:7px;">"Our process is very simple — I just need to ask you a <em class="h">few basic questions</em>. We'll <em class="h">evaluate the area right here at the computer</em>. Should take 5-7 minutes."</div>
+      </div>
+      <div class="card green" style="margin-bottom:11px; padding:14px 16px;">
+        <div class="cl g">Pattern 2: Long Timeline → No Rush</div>
+        <div class="ct2" style="color:#ccc; font-size:13px; font-style:normal; line-height:1.6; margin-top:7px;">"We can give you a <em class="h">hundred and twenty days</em> to close — on your schedule. <em class="h">How soon would you</em> ideally want to move?"</div>
+      </div>
+      <div class="card green" style="padding:14px 16px;">
+        <div class="cl g">Pattern 3: Paperwork + Structure</div>
+        <div class="ct2" style="color:#ccc; font-size:13px; font-style:normal; line-height:1.6; margin-top:7px;">"We can <em class="h">structure it the way that</em> works for you. We handle <em class="h">all the paperwork</em> — you don't have to worry about any of that."</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 11 — RESISTANCE TO RESOLUTION ══════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Resistance → Resolution Arcs</div>
+  <h2>Sellers Who <span class="a4">Pushed Back</span> Then <span class="a3">Came Around</span></h2>
+  <div class="sub" style="margin-bottom:20px;">Real examples from contracts calls where the agent bridged seller resistance to resolution. What did they say in between?</div>
+
+  <div class="flex-col" style="display:flex; flex-direction:column; align-items:center; gap:11px; width:100%; max-width:980px;">
+    <div class="conv" style="max-width:980px; margin-bottom:0;">
+      <div class="ca" style="background:rgba(239,68,68,.06); border-color:rgba(239,68,68,.14);">
+        <div class="clb" style="color:#b91c1c;">RESISTANCE — SF Bay Area</div>
+        <div class="ct2">"I'm not sure — I've received gobs of offers. <em class="r">Sight unseen — up to $134K.</em>"</div>
+      </div>
+      <div class="ca" style="background:rgba(245,158,11,.06); border-color:rgba(245,158,11,.14); border-radius:0;">
+        <div class="clb agent">AGENT BRIDGE</div>
+        <div class="ct2">"<em class="h">I can't speak for other companies</em>. Some don't offer a commission-free process — they say 'as-is' but factor that into what you net. <em class="h">When we come out and walk the property, the number is the number.</em>"</div>
+      </div>
+      <div class="cs"><div class="clb seller">SELLER — resolved ↗</div><div class="ct2">"I've heard that too. But I'm serious in what I'm doing — <em class="h">if you're willing to come out and take a look at it, yes.</em>"</div></div>
+    </div>
+    <div class="conv" style="max-width:980px; margin-bottom:0;">
+      <div class="ca" style="background:rgba(239,68,68,.06); border-color:rgba(239,68,68,.14);">
+        <div class="clb" style="color:#b91c1c;">RESISTANCE — SF Bay Area</div>
+        <div class="ct2">"I'm not in a rush to sell it. <em class="r">I have enough headaches, I don't want to deal with more.</em>"</div>
+      </div>
+      <div class="ca" style="background:rgba(245,158,11,.06); border-color:rgba(245,158,11,.14); border-radius:0;">
+        <div class="clb agent">AGENT BRIDGE</div>
+        <div class="ct2">"So you'd rather give it away at a good price and let someone else deal with it — and the squatter. <em class="h">If we present you a cash offer that makes sense, what would you take as-is?</em>"</div>
+      </div>
+      <div class="cs"><div class="clb seller">SELLER — resolved ↗</div><div class="ct2">"I was thinking three sixty. <em class="h">I'm open to offers.</em>"</div></div>
+    </div>
+    <div class="conv" style="max-width:980px; margin-bottom:0;">
+      <div class="ca" style="background:rgba(239,68,68,.06); border-color:rgba(239,68,68,.14);">
+        <div class="clb" style="color:#b91c1c;">RESISTANCE — SF Bay Area</div>
+        <div class="ct2">"<em class="r">We'd still need 30 to 60 days to move our stuff.</em> I'm not sure how the funding works."</div>
+      </div>
+      <div class="ca" style="background:rgba(245,158,11,.06); border-color:rgba(245,158,11,.14); border-radius:0;">
+        <div class="clb agent">AGENT BRIDGE</div>
+        <div class="ct2">"That makes sense. <em class="h">We can be very very flexible on the time frame to close.</em> If we reach agreement — we give you money at closing and you keep the house until you're ready."</div>
+      </div>
+      <div class="cs"><div class="clb seller">SELLER — resolved ↗</div><div class="ct2">"<em class="h">Okay that works perfectly. Yes.</em>"</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 12 — THE FULL SEQUENCE ════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">The Full Conversation Arc</div>
+  <h2>What <span class="a">Contracts Calls</span> Look Like vs <span class="a2">No-Contract Calls</span></h2>
+
+  <div class="g c2 mx" style="max-width:1020px;">
+    <div>
+      <div style="font-size:11px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; color:#c47f00; margin-bottom:14px;">✅ Contracts Call Sequence</div>
+      <div class="fl"><div class="fb a">① Empathy pause</div><div class="far">→</div><div class="fb">Seller opens up</div></div>
+      <div class="fl"><div class="fb a">② "Tell me about it"</div><div class="far">→</div><div class="fb">Reveals real urgency</div></div>
+      <div class="fl"><div class="fb a">③ "Process is simple"</div><div class="far">→</div><div class="fb">Seller relaxes</div></div>
+      <div class="fl"><div class="fb a">④ "We buy as-is"</div><div class="far">→</div><div class="fb">Process relief signal</div></div>
+      <div class="fl"><div class="fb a">⑤ Flexible timeline</div><div class="far">→</div><div class="fb">"Sounds good / okay"</div></div>
+      <div class="fl"><div class="fb g">⑥ Appointment push</div><div class="far">→</div><div class="fb g">"When can you come by?"</div></div>
+    </div>
+    <div>
+      <div style="font-size:11px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; color:#6b7280; margin-bottom:14px;">❌ No-Contract Call Sequence</div>
+      <div class="fl"><div class="fb" style="opacity:.5">① Skips empathy</div><div class="far" style="opacity:.4">→</div><div class="fb" style="opacity:.5">Goes to property questions</div></div>
+      <div class="fl"><div class="fb" style="opacity:.5">② Property condition</div><div class="far" style="opacity:.4">→</div><div class="fb" style="opacity:.5">Seller shares basics only</div></div>
+      <div class="fl"><div class="fb">③ "Process is simple"</div><div class="far">→</div><div class="fb">Seller asks process questions</div></div>
+      <div class="fl"><div class="fb">④ Cash / no lender</div><div class="far">→</div><div class="fb">"Sounds okay" (conditional)</div></div>
+      <div class="fl"><div class="fb" style="border-color:rgba(239,68,68,.2); background:rgba(239,68,68,.05);">⑤ Price mentioned early</div><div class="far">→</div><div class="fb" style="border-color:rgba(239,68,68,.2);">Anchoring / "let me think"</div></div>
+      <div class="fl"><div class="fb" style="opacity:.5">⑥ Weak close</div><div class="far" style="opacity:.4">→</div><div class="fb" style="opacity:.5">No appointment scheduled</div></div>
+    </div>
+  </div>
+
+  <div class="ins">
+    <div class="il">The Core Difference</div>
+    <div class="it">Contracts agents run steps 1–6 in order. No-contract agents skip steps 1–2 and jump into features (cash, no lender, price) before the seller has emotionally engaged. The seller hasn't felt heard yet — so the features land on skeptical ears.</div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 13 — CALL COACHING CARD ════════════════════════════════════════ -->
+<div class="slide">
+  <div class="ey">Tactical Application</div>
+  <h2>The <span class="a">In-Call Playbook</span> — Based on Real Data</h2>
+
+  <div class="g c2 mx" style="max-width:1040px;">
+    <div class="card amber">
+      <div class="cl a">⭐ Say These — Before Price, Before Process</div>
+      <div style="margin-top:10px; font-size:14px; color:#fff; line-height:1.85;">
+        <strong>"Before we get into anything — I'm sorry to hear that, that sounds like a lot."</strong><br>
+        <strong>"Our process is very simple — just a few basic questions, takes 5 minutes."</strong><br>
+        <strong>"We buy it as-is — no repairs, no cleaning, no fixing anything."</strong><br>
+        <strong>"We're very flexible on the time frame — you choose the closing date."</strong>
+      </div>
+    </div>
+    <div class="card amber">
+      <div class="cl a">⭐ Push for Appointment Concretely</div>
+      <div style="margin-top:10px; font-size:14px; color:#fff; line-height:1.85;">
+        <strong>Not: "We can set something up."</strong><br>
+        <strong>Say: "I have someone in your area available Tuesday at 10. Can we confirm that?"</strong><br><br>
+        Name a person. Name a time. Name a day. Vague appointment pushes produce no-contracts.
+      </div>
+    </div>
+    <div class="card">
+      <div class="cl">When Seller Asks Lots of Process Questions</div>
+      <div style="margin-top:8px; font-size:13.5px; color:#ccc; line-height:1.7;">
+        <strong>"Great — let me answer all of that right after I understand your property better. Two minutes, then I give you real answers for your situation, not generic ones."</strong><br><br>Redirect to property → surface urgency → then answer their questions with context.
+      </div>
+    </div>
+    <div class="card">
+      <div class="cl">When Seller Mentions Other Offers / Companies</div>
+      <div style="margin-top:8px; font-size:13.5px; color:#ccc; line-height:1.7;">
+        <strong>"I can't speak for other companies. Some make sight-unseen offers — then adjust at closing. When we walk the property, the number is the number. No surprises."</strong><br><br>Competitor contrast appears +1pp in contracts. Use it to differentiate, not attack.
+      </div>
+    </div>
+    <div class="card">
+      <div class="cl">When Seller Shows Price Resistance</div>
+      <div style="margin-top:8px; font-size:13.5px; color:#ccc; line-height:1.7;">
+        Don't push the number. Push the timeline flexibility: <strong>"We can structure it so you have 90-120 days — the house is yours until you're ready. What would that be worth to you?"</strong> Price resistance often dissolves when urgency is re-framed.
+      </div>
+    </div>
+    <div class="card">
+      <div class="cl">Universal Opener to Surface Urgency</div>
+      <div style="margin-top:8px; font-size:13.5px; color:#ccc; line-height:1.7;">
+        <strong>"Before anything — what's making this feel like the right time to think about selling?"</strong><br><br>This one question surfaces life-event turning points that agents would otherwise never hear.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 14 — BOTTOM LINE ════════════════════════════════════════════════ -->
+<div class="slide title-bg">
+  <div class="ey">Bottom Line — 5 Findings</div>
+  <h2>What <span class="a">Contracts Agents</span> Do Differently</h2>
+
+  <div class="g c2 mx" style="max-width:1000px; margin-bottom:13px;">
+    <div class="card amber">
+      <div style="font-size:28px; font-weight:800; color:#f59e0b; margin-bottom:9px;">01</div>
+      <div class="ct">They get sellers to "Moving Forward" 10pp more</div>
+      <div class="cb">54% of contract calls have the "sounds good / okay that works / let's do it" signal vs 44% of no-contract calls. This is the whole game in one number.</div>
+    </div>
+    <div class="card amber">
+      <div style="font-size:28px; font-weight:800; color:#f59e0b; margin-bottom:9px;">02</div>
+      <div class="ct">They push for the appointment — hard</div>
+      <div class="cb">28% C vs 21% NC (+7pp). AND 30% Closed vs 25% Dead (+5pp). The only move that wins on both dimensions. They name a specific person, day, and time — not "we can set something up."</div>
+    </div>
+    <div class="card amber">
+      <div style="font-size:28px; font-weight:800; color:#f59e0b; margin-bottom:9px;">03</div>
+      <div class="ct">Flexible timeline seals the closed deal</div>
+      <div class="cb">Only +2pp C vs NC — but +7pp Closed vs Dead. The biggest single gap within contracts. Saying "we're very flexible on the time frame" before price is what turns a contract into a closed deal.</div>
+    </div>
+    <div class="card amber">
+      <div style="font-size:28px; font-weight:800; color:#f59e0b; margin-bottom:9px;">04</div>
+      <div class="ct">They say "as-is" out loud and show empathy first</div>
+      <div class="cb">"As-is" explicit: C 17% vs NC 14% — and CL 20% vs Dead 15%. Empathy before business: C 7% vs NC 4% — and CL 8% vs Dead 5%. Both are consistent across both dimensions.</div>
+    </div>
+  </div>
+
+  <div class="card" style="max-width:1000px; padding:15px 22px;">
+    <div style="font-size:28px; font-weight:800; color:#22c55e; margin-bottom:8px;">05</div>
+    <span class="ct">The things that seem like they'd work — don't: </span>
+    <span class="cb"> Price/offer mentioned correlates with Dead deals. "Cash / no lender" as an opener = more Dead than Closed. Seller asking process questions = shopping, not buying. Trust signals ("you seem honest") don't predict closing. <strong style="color:#fbbf24">Movement predicts closing. Empathy + as-is + flexible timeline + appointment push = the actual formula.</strong></span>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div id="nav">
+  <button id="bp2">←</button>
+  <span id="sc">1 / 14</span>
+  <button id="bn2">→</button>
+</div>
+<div id="hint">← → keys</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+  const bar = document.getElementById('pb');
+  const sc  = document.getElementById('sc');
+
+  function go(n) {
+    const p = cur;
+    cur = Math.max(0, Math.min(n, total-1));
+    if (p === cur) return;
+    slides[p].classList.remove('active');
+    slides[p].classList.add('exit');
+    setTimeout(()=>slides[p].classList.remove('exit'), 450);
+    slides[cur].classList.add('active');
+    bar.style.width = ((cur+1)/total*100)+'%';
+    sc.textContent  = (cur+1)+' / '+total;
+  }
+
+  document.getElementById('bn2').addEventListener('click',()=>go(cur+1));
+  document.getElementById('bp2').addEventListener('click',()=>go(cur-1));
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') go(cur+1);
+    if(e.key==='ArrowLeft' ||e.key==='ArrowUp')   go(cur-1);
+  });
+  bar.style.width=(1/total*100)+'%';
+</script>
+</body>
+</html>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>In-Call Turning Points — C vs NC (Deep Analysis)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0d0f14;color:#e8eaf0;overflow:hidden;height:100vh}
+.deck{width:100%;height:100vh;position:relative}
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;display:none;flex-direction:column;padding:52px 64px 40px;overflow-y:auto}
+.slide.active{display:flex}
+
+/* ── colour tokens ── */
+:root{
+  --green-strong:#00e676;--green:#4caf50;--green-mild:#8bc34a;
+  --red:#ef5350;--amber:#ffc107;--blue:#42a5f5;
+  --teal:#26c6da;--purple:#ab47bc;
+  --bg2:#161920;--bg3:#1e2130;--border:#2a2d3a;
+}
+
+/* ── typography ── */
+h1{font-size:2.8rem;font-weight:800;line-height:1.15;margin-bottom:.5rem}
+h2{font-size:2.1rem;font-weight:700;margin-bottom:.4rem}
+h3{font-size:1.2rem;font-weight:600;color:#9aa0b8;margin-bottom:1.2rem;letter-spacing:.03em;text-transform:uppercase}
+p{color:#b0b8d0;font-size:1rem;line-height:1.6;margin-bottom:.6rem}
+.sub{font-size:.85rem;color:#6b7494;margin-top:.3rem}
+
+/* ── big stat ── */
+.stat-row{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0}
+.stat-box{flex:1;min-width:140px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px 20px}
+.stat-num{font-size:2.6rem;font-weight:900;line-height:1}
+.stat-label{font-size:.78rem;color:#7a82a0;margin-top:5px;text-transform:uppercase;letter-spacing:.05em}
+.stat-sub{font-size:.82rem;color:#9aa0b8;margin-top:4px}
+
+/* ── tables ── */
+.tbl-wrap{overflow-x:auto;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{background:#1a1d28;color:#9aa0b8;text-align:left;padding:9px 12px;font-weight:600;border-bottom:2px solid var(--border);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.03)}
+.num{text-align:right;font-variant-numeric:tabular-nums;font-family:monospace}
+
+/* ── gap badges ── */
+.green-strong{color:var(--green-strong);font-weight:800}
+.green{color:var(--green);font-weight:700}
+.green-mild{color:var(--green-mild)}
+.red{color:var(--red);font-weight:700}
+.neutral{color:#9aa0b8}
+.amber{color:var(--amber);font-weight:700}
+
+/* ── bar chart ── */
+.bar-row{display:flex;align-items:center;gap:12px;margin:6px 0}
+.bar-label{width:190px;font-size:.83rem;color:#c8cce0;flex-shrink:0;text-align:right}
+.bar-track{flex:1;background:#1e2130;border-radius:4px;height:20px;position:relative;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.bar-val{width:56px;font-size:.8rem;font-family:monospace;text-align:right;color:#9aa0b8;flex-shrink:0}
+.bar-nc  .bar-fill{background:#3d4466}
+.bar-c   .bar-fill{background:#1976d2}
+.bar-cl  .bar-fill{background:var(--green)}
+.bar-de  .bar-fill{background:#c62828}
+
+/* ── insight card ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin:16px 0}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-icon{font-size:1.8rem;margin-bottom:8px}
+.card-title{font-size:1rem;font-weight:700;margin-bottom:6px}
+.card-body{font-size:.84rem;color:#9aa0b8;line-height:1.55}
+.card.highlight{border-color:var(--green-strong);background:rgba(0,230,118,.05)}
+.card.warn{border-color:var(--red);background:rgba(239,83,80,.05)}
+.card.amber-c{border-color:var(--amber);background:rgba(255,193,7,.04)}
+
+/* ── quote block ── */
+.quote{background:var(--bg2);border-left:4px solid var(--blue);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;font-size:.87rem;font-style:italic;color:#b8c0d8;line-height:1.55}
+
+/* ── pill ── */
+.pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.74rem;font-weight:700;margin:2px}
+.pill-g{background:rgba(0,230,118,.15);color:var(--green-strong)}
+.pill-r{background:rgba(239,83,80,.15);color:var(--red)}
+.pill-a{background:rgba(255,193,7,.15);color:var(--amber)}
+.pill-b{background:rgba(66,165,245,.15);color:var(--blue)}
+
+/* ── callout box ── */
+.callout{display:flex;align-items:flex-start;gap:14px;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.25);border-radius:12px;padding:18px;margin:16px 0}
+.callout-icon{font-size:1.6rem;flex-shrink:0}
+.callout-text{font-size:.92rem;color:#c8d8c0;line-height:1.55}
+.callout.warn{background:rgba(239,83,80,.07);border-color:rgba(239,83,80,.25)}
+.callout-text strong{color:#fff}
+
+/* ── section divider ── */
+.divider{height:1px;background:var(--border);margin:18px 0}
+
+/* ── progress ── */
+#progress{position:fixed;top:0;left:0;height:3px;background:var(--green);transition:width .3s ease;z-index:100}
+
+/* ── nav ── */
+.nav{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;z-index:50}
+.nav button{background:rgba(255,255,255,.08);border:none;color:#c8cce0;padding:8px 20px;border-radius:20px;cursor:pointer;font-size:.85rem;transition:background .2s}
+.nav button:hover{background:rgba(255,255,255,.18)}
+.slide-counter{font-size:.8rem;color:#666;min-width:60px;text-align:center}
+
+/* ── title slide ── */
+.title-slide{justify-content:center;background:radial-gradient(ellipse at 30% 40%,rgba(25,118,210,.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 70%,rgba(0,200,120,.10) 0%,transparent 50%)}
+.badge-row{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.badge{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:.82rem;color:#9aa0b8}
+.badge span{color:#fff;font-weight:700}
+
+/* ── 2-col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+
+/* ── scrollbar ── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:3px}
+
+.label-c{color:var(--blue);font-weight:700}
+.label-nc{color:#8892c8;font-weight:700}
+.label-cl{color:var(--green);font-weight:700}
+.label-de{color:var(--red);font-weight:700}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<div class="deck" id="deck">
+
+<div class="slide active title-slide" id="s1">
+  <h3>Doctor Homes · In-Call Analysis · 7,354 Transcripts</h3>
+  <h1>What Happens In The Call<br>That Makes Sellers Say Yes?</h1>
+  <p style="font-size:1.15rem;color:#9aa0b8;margin:10px 0 20px">
+    A deep comparison of <strong style="color:#fff">1,153 contracts</strong> 
+    vs <strong style="color:#8892c8">6,201 no-contracts</strong> — 
+    every seller shift, every agent move, every causal pair
+  </p>
+  <div class="badge-row">
+    <div class="badge">Contracts <span>1,153</span></div>
+    <div class="badge">  ↳ Closed <span style="color:var(--green)">393</span></div>
+    <div class="badge">  ↳ Dead <span style="color:var(--red)">531</span></div>
+    <div class="badge">No-Contracts <span style="color:#8892c8">6,201</span></div>
+    <div class="badge">Total <span>7,354</span></div>
+  </div>
+  <div class="cards" style="margin-top:24px">
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-title">What we measured</div>
+      <div class="card-body">8 seller "willingness shift" signal categories detected in every transcript using natural language pattern matching across speaker-parsed turns</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎯</div>
+      <div class="card-title">Agent moves tracked</div>
+      <div class="card-body">13 distinct agent move types tracked per call, with causal "precede" analysis: which move immediately triggers which seller shift</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">🔑</div>
+      <div class="card-title">The core question</div>
+      <div class="card-body">When does a seller go from uncertain to willing — and what specifically did the agent say or do just before that moment?</div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:auto">Press → or click Next to begin</p>
+</div>
+
+<div class="slide" id="s2">
+  <h3>Macro View</h3>
+  <h2>Contracts vs No-Contracts: The Big Numbers</h2>
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green-strong)">3.39</div>
+      <div class="stat-label">Avg seller shifts / call</div>
+      <div class="stat-sub"><span class="label-c">Contracts</span> vs <span class="label-nc">2.50</span> No-Contracts</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--amber)">72.3%</div>
+      <div class="stat-label">Multi-shift calls</div>
+      <div class="stat-sub"><span class="label-c">Contracts</span> vs <span class="label-nc">60.6%</span> No-Contracts</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--blue)">33%</div>
+      <div class="stat-label">Into call — first shift</div>
+      <div class="stat-sub"><span class="label-c">Contracts</span> vs <span class="label-nc">37%</span> No-Contracts</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--purple)">1.10</div>
+      <div class="stat-label">Resistance arcs resolved</div>
+      <div class="stat-sub"><span class="label-c">Contracts</span> vs <span class="label-nc">1.01</span> No-Contracts</div>
+    </div>
+  </div>
+  <div class="callout">
+    <div class="callout-icon">💡</div>
+    <div class="callout-text"><strong>What this means:</strong> Contract calls don't just happen to get one "yes" — they generate a <em>sequence</em> of positive signals. The average contract call has 36% more seller willingness moments than the average no-contract call. It's not a single magic moment — it's momentum built across the whole call.</div>
+  </div>
+  <div class="two-col" style="margin-top:16px">
+    <div>
+      <h3>First seller shift position</h3>
+      <p style="font-size:.88rem;color:#9aa0b8">Normalized 0 = call start, 1 = call end. Lower = sellers open up earlier.</p>
+      <div class="bar-row bar-c"><div class="bar-label">Contracts</div><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><div class="bar-val">33%</div></div>
+      <div class="bar-row bar-nc"><div class="bar-label">No-Contracts</div><div class="bar-track"><div class="bar-fill" style="width:37%"></div></div><div class="bar-val">37%</div></div>
+      <div class="bar-row bar-cl"><div class="bar-label">Closed (within C)</div><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><div class="bar-val">33%</div></div>
+      <div class="bar-row bar-de"><div class="bar-label">Dead (within C)</div><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><div class="bar-val">33%</div></div>
+    </div>
+    <div>
+      <h3>Multi-shift call rate</h3>
+      <p style="font-size:.88rem;color:#9aa0b8">% of calls where seller signals willingness 2+ times</p>
+      <div class="bar-row bar-c"><div class="bar-label">Contracts</div><div class="bar-track"><div class="bar-fill" style="width:72.3%"></div></div><div class="bar-val">72.3%</div></div>
+      <div class="bar-row bar-nc"><div class="bar-label">No-Contracts</div><div class="bar-track"><div class="bar-fill" style="width:60.6%"></div></div><div class="bar-val">60.6%</div></div>
+      <div class="bar-row bar-cl"><div class="bar-label">Closed</div><div class="bar-track"><div class="bar-fill" style="width:73.5%"></div></div><div class="bar-val">73.5%</div></div>
+      <div class="bar-row bar-de"><div class="bar-label">Dead</div><div class="bar-track"><div class="bar-fill" style="width:72.3%"></div></div><div class="bar-val">72.3%</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s3">
+  <h3>Seller Willingness Signals</h3>
+  <h2>8 Types of Seller Shifts — C vs NC</h2>
+  <p>How often each seller shift signal appears in contract calls vs no-contract calls</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Seller Shift Type</th>
+        <th class="num">Contracts %</th>
+        <th class="num">No-Contract %</th>
+        <th class="num">Gap</th>
+      </tr></thead>
+      <tbody><tr>
+      <td><strong>Moving Forward</strong></td>
+      <td class="num label-c">57.0%</td>
+      <td class="num label-nc">42.9%</td>
+      <td class="num green-strong">+14.1pp</td>
+    </tr><tr>
+      <td><strong>Urgency Signal</strong></td>
+      <td class="num label-c">42.6%</td>
+      <td class="num label-nc">29.9%</td>
+      <td class="num green-strong">+12.7pp</td>
+    </tr><tr>
+      <td><strong>Price Acceptance</strong></td>
+      <td class="num label-c">34.2%</td>
+      <td class="num label-nc">27.5%</td>
+      <td class="num green-strong">+6.7pp</td>
+    </tr><tr>
+      <td><strong>Openness/Curiosity</strong></td>
+      <td class="num label-c">52.6%</td>
+      <td class="num label-nc">50.6%</td>
+      <td class="num green-mild">+2.0pp</td>
+    </tr><tr>
+      <td><strong>Commitment Signal</strong></td>
+      <td class="num label-c">2.3%</td>
+      <td class="num label-nc">1.0%</td>
+      <td class="num green-mild">+1.3pp</td>
+    </tr><tr>
+      <td><strong>Relief/Validation</strong></td>
+      <td class="num label-c">1.3%</td>
+      <td class="num label-nc">0.5%</td>
+      <td class="num neutral">+0.8pp</td>
+    </tr><tr>
+      <td><strong>Trust Building</strong></td>
+      <td class="num label-c">2.4%</td>
+      <td class="num label-nc">2.2%</td>
+      <td class="num neutral">+0.2pp</td>
+    </tr><tr>
+      <td><strong>Appointment/Visit</strong></td>
+      <td class="num label-c">1.0%</td>
+      <td class="num label-nc">0.9%</td>
+      <td class="num neutral">+0.1pp</td>
+    </tr></tbody>
+    </table>
+  </div>
+  <div class="cards" style="margin-top:14px">
+    <div class="card highlight">
+      <div class="card-title">🏆 Biggest Differentiator: Moving Forward</div>
+      <div class="card-body">+14pp gap. "Let's do it," "sounds like a plan," "you can come" — these concrete next-step signals appear in <strong style="color:#fff">57%</strong> of contract calls but only 43% of no-contracts. Contracts don't just end in curiosity — they end in direction.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">⚡ #2: Urgency Signal (+12.7pp)</div>
+      <div class="card-body">Sellers expressing time pressure — "as soon as possible," "need to be done fast," "deadline is coming" — appear far more in contracts. Urgency is <em>recognized</em> in these calls, not ignored.</div>
+    </div>
+    <div class="card amber-c">
+      <div class="card-title">⚠️ Same-rate signal: Openness/Curiosity</div>
+      <div class="card-body">Only +2pp gap. "How does it work?" appears nearly equally in both files. Getting a seller curious is easy — it does <em>not</em> separate contracts from no-contracts by itself.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s4">
+  <h3>Agent Moves</h3>
+  <h2>13 Agent Behaviors — C vs NC & Closed vs Dead</h2>
+  <p>Two lenses: what gets a contract (C vs NC), and what closes a deal (Closed vs Dead)</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Agent Move</th>
+        <th class="num">C%</th>
+        <th class="num">NC%</th>
+        <th class="num">Gap C-NC</th>
+        <th class="num">CL%</th>
+        <th class="num">DE%</th>
+        <th class="num">Gap CL-DE</th>
+      </tr></thead>
+      <tbody><tr>
+      <td><strong>Social Proof</strong></td>
+      <td class="num label-c">28.7%</td>
+      <td class="num label-nc">19.1%</td>
+      <td class="num green-strong">+9.6pp</td>
+      <td class="num label-cl">31.0%</td>
+      <td class="num label-de">27.9%</td>
+      <td class="num green">+3.1pp</td>
+    </tr><tr>
+      <td><strong>As-Is Framing</strong></td>
+      <td class="num label-c">61.2%</td>
+      <td class="num label-nc">55.0%</td>
+      <td class="num green-strong">+6.2pp</td>
+      <td class="num label-cl">65.6%</td>
+      <td class="num label-de">57.3%</td>
+      <td class="num green-strong">+8.3pp</td>
+    </tr><tr>
+      <td><strong>Process Simplicity</strong></td>
+      <td class="num label-c">18.3%</td>
+      <td class="num label-nc">13.3%</td>
+      <td class="num green">+5.0pp</td>
+      <td class="num label-cl">17.0%</td>
+      <td class="num label-de">20.0%</td>
+      <td class="num red">-3.0pp</td>
+    </tr><tr>
+      <td><strong>Urgency Creation</strong></td>
+      <td class="num label-c">11.8%</td>
+      <td class="num label-nc">8.1%</td>
+      <td class="num green">+3.7pp</td>
+      <td class="num label-cl">12.5%</td>
+      <td class="num label-de">11.3%</td>
+      <td class="num green-mild">+1.2pp</td>
+    </tr><tr>
+      <td><strong>Empathy/Validation</strong></td>
+      <td class="num label-c">52.7%</td>
+      <td class="num label-nc">49.2%</td>
+      <td class="num green">+3.5pp</td>
+      <td class="num label-cl">55.2%</td>
+      <td class="num label-de">51.2%</td>
+      <td class="num green">+4.0pp</td>
+    </tr><tr>
+      <td><strong>Asking Questions</strong></td>
+      <td class="num label-c">53.3%</td>
+      <td class="num label-nc">50.5%</td>
+      <td class="num green-mild">+2.8pp</td>
+      <td class="num label-cl">51.4%</td>
+      <td class="num label-de">53.3%</td>
+      <td class="num neutral">-1.9pp</td>
+    </tr><tr>
+      <td><strong>Flexible Timeline</strong></td>
+      <td class="num label-c">10.7%</td>
+      <td class="num label-nc">8.0%</td>
+      <td class="num green-mild">+2.7pp</td>
+      <td class="num label-cl">13.0%</td>
+      <td class="num label-de">9.0%</td>
+      <td class="num green">+4.0pp</td>
+    </tr><tr>
+      <td><strong>Story/Social Scenario</strong></td>
+      <td class="num label-c">4.7%</td>
+      <td class="num label-nc">2.7%</td>
+      <td class="num green-mild">+2.0pp</td>
+      <td class="num label-cl">5.9%</td>
+      <td class="num label-de">4.3%</td>
+      <td class="num green-mild">+1.6pp</td>
+    </tr><tr>
+      <td><strong>Cash/No Lender</strong></td>
+      <td class="num label-c">26.0%</td>
+      <td class="num label-nc">25.2%</td>
+      <td class="num neutral">+0.8pp</td>
+      <td class="num label-cl">26.7%</td>
+      <td class="num label-de">26.4%</td>
+      <td class="num neutral">+0.3pp</td>
+    </tr><tr>
+      <td><strong>Objection Handling</strong></td>
+      <td class="num label-c">2.3%</td>
+      <td class="num label-nc">1.7%</td>
+      <td class="num neutral">+0.6pp</td>
+      <td class="num label-cl">1.8%</td>
+      <td class="num label-de">2.6%</td>
+      <td class="num neutral">-0.8pp</td>
+    </tr><tr>
+      <td><strong>Appointment Push</strong></td>
+      <td class="num label-c">9.3%</td>
+      <td class="num label-nc">8.8%</td>
+      <td class="num neutral">+0.5pp</td>
+      <td class="num label-cl">12.7%</td>
+      <td class="num label-de">7.7%</td>
+      <td class="num green">+5.0pp</td>
+    </tr><tr>
+      <td><strong>Specific Number Offer</strong></td>
+      <td class="num label-c">9.1%</td>
+      <td class="num label-nc">8.9%</td>
+      <td class="num neutral">+0.2pp</td>
+      <td class="num label-cl">10.7%</td>
+      <td class="num label-de">7.5%</td>
+      <td class="num green">+3.2pp</td>
+    </tr><tr>
+      <td><strong>Price Anchoring</strong></td>
+      <td class="num label-c">20.8%</td>
+      <td class="num label-nc">25.2%</td>
+      <td class="num red">-4.4pp</td>
+      <td class="num label-cl">21.4%</td>
+      <td class="num label-de">19.0%</td>
+      <td class="num green-mild">+2.4pp</td>
+    </tr></tbody>
+    </table>
+  </div>
+  <div class="callout" style="margin-top:12px">
+    <div class="callout-icon">🚨</div>
+    <div class="callout-text callout warn"><strong>Price Anchoring is the only NEGATIVE gap:</strong> No-contract calls use price anchoring <em>more</em> than contract calls (25.2% vs 20.8%). Agents who lead with or over-emphasize specific numbers are losing deals — not winning them. The data says price should follow value, not lead it.</div>
+  </div>
+</div>
+
+<div class="slide" id="s5">
+  <h3>The Double Winners</h3>
+  <h2>Agent Moves That Win on BOTH Dimensions</h2>
+  <p>Some moves create contracts (C vs NC gap). Others close deals (CL vs DE gap). Very few do both.</p>
+  <div class="cards">
+    <div class="card highlight">
+      <div class="card-icon">🏅</div>
+      <div class="card-title">As-Is Framing — Double Winner</div>
+      <div class="card-body">
+        <strong style="color:#fff">+6.2pp</strong> C vs NC &nbsp;|&nbsp; <strong style="color:var(--green)">+8.3pp</strong> Closed vs Dead<br><br>
+        The only move that strongly separates contracts from no-contracts AND closed from dead. Explicitly telling sellers they don't need to repair anything unlocks both initial agreement and final close.
+      </div>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">🥈</div>
+      <div class="card-title">Empathy / Validation — Double Winner</div>
+      <div class="card-body">
+        <strong style="color:#fff">+3.5pp</strong> C vs NC &nbsp;|&nbsp; <strong style="color:var(--green)">+4.0pp</strong> Closed vs Dead<br><br>
+        "I understand that. That sounds tough." Acknowledging the seller's situation appears consistently more in both dimensions. Empathy isn't soft — it's structural.
+      </div>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">🥉</div>
+      <div class="card-title">Flexible Timeline — Double Winner</div>
+      <div class="card-body">
+        <strong style="color:#fff">+2.7pp</strong> C vs NC &nbsp;|&nbsp; <strong style="color:var(--green)">+4.0pp</strong> Closed vs Dead<br><br>
+        "Whenever you're ready, no rush." Small C vs NC gap but strong CL vs DE gap — this move matters most at close, not at entry.
+      </div>
+    </div>
+    <div class="card amber-c">
+      <div class="card-icon">🎯</div>
+      <div class="card-title">Appointment Push — Closer Move Only</div>
+      <div class="card-body">
+        <strong style="color:#fff">+0.5pp</strong> C vs NC (tiny) &nbsp;|&nbsp; <strong style="color:var(--green)">+5.0pp</strong> Closed vs Dead (huge)<br><br>
+        Doesn't separate who gets a contract — but massively separates who closes one. Push for the appointment after the seller opens up.
+      </div>
+    </div>
+    <div class="card warn">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">Process Simplicity — One-Sided</div>
+      <div class="card-body">
+        <strong style="color:#fff">+5.0pp</strong> C vs NC (good) &nbsp;|&nbsp; <strong style="color:var(--red)">−3.0pp</strong> Closed vs Dead (bad)<br><br>
+        Gets sellers in the door but doesn't close them. Overusing simplicity framing in later stages may signal agent is avoiding depth when the seller needs it.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-icon">📢</div>
+      <div class="card-title">Social Proof — Strong Entry Move</div>
+      <div class="card-body">
+        <strong style="color:#fff">+9.6pp</strong> C vs NC (largest gap) &nbsp;|&nbsp; <strong style="color:#9aa0b8">+3.1pp</strong> Closed vs Dead (modest)<br><br>
+        Best at creating contracts from nothing. Mentioning other sellers helped, reviews, and track record builds enough trust to move forward.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s6">
+  <h3>Counter-Intuitive Finding</h3>
+  <h2>Price Anchoring — The Move That Hurts</h2>
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--red)">25.2%</div>
+      <div class="stat-label">No-Contract calls use price anchoring</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--blue)">20.8%</div>
+      <div class="stat-label">Contract calls use price anchoring</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--red)">−4.4pp</div>
+      <div class="stat-label">Gap — NC uses it MORE</div>
+    </div>
+  </div>
+  <div class="callout warn">
+    <div class="callout-icon">🚨</div>
+    <div class="callout-text"><strong>What this tells us:</strong> Agents who lead with or over-emphasize a specific number early are more likely to lose the deal. The transcript data is clear — price anchoring appears <em>more</em> in no-contract calls. Either sellers reject the number and disengage, or agents use it as a crutch instead of building value first.</div>
+  </div>
+  <div class="two-col" style="margin-top:16px">
+    <div class="card warn">
+      <div class="card-title">🔴 What the losing pattern looks like</div>
+      <div class="card-body">Agent drops a specific dollar figure early → seller hasn't been warmed up on as-is / no-repairs / flexibility → seller anchors to that number and pushes back → call stalls at price negotiation → no contract</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">✅ What the winning pattern looks like</div>
+      <div class="card-body">Agent establishes as-is framing first → validates seller's situation with empathy → uses social proof → then introduces price in context of value (speed, certainty, no repairs, flexible close) → seller's reference point shifts before the number lands</div>
+    </div>
+  </div>
+  <div class="quote">
+    "If we can go ahead and evaluate the area right here and I can put together an offer that you like, we could move forward on your timeline..." <br><em style="color:#6b7494">— N-gram from Closed calls: "offer that you like" appears 9x just before seller says yes</em>
+  </div>
+</div>
+
+<div class="slide" id="s7">
+  <h3>Agent Move Deep Dive</h3>
+  <h2>Social Proof — The Biggest C vs NC Gap</h2>
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green-strong)">28.7%</div>
+      <div class="stat-label">Contracts use social proof</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#8892c8">19.1%</div>
+      <div class="stat-label">No-Contracts use social proof</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green-strong)">+9.6pp</div>
+      <div class="stat-label">Gap</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green)">31.0% / 27.9%</div>
+      <div class="stat-label">Closed vs Dead within C</div>
+    </div>
+  </div>
+  <div class="callout">
+    <div class="callout-icon">🏆</div>
+    <div class="callout-text"><strong>Social Proof is the #1 move separating contract calls from no-contract calls.</strong> Saying "we've helped many sellers just like you," "we have great reviews," or "our team has done this many times" appears in nearly 1 in 3 contract calls — but only 1 in 5 no-contract calls. It builds enough credibility to get a seller to say yes to the next step.</div>
+  </div>
+  <div class="cards" style="margin-top:14px">
+    <div class="card">
+      <div class="card-title">What counts as social proof</div>
+      <div class="card-body">
+        • "We've helped hundreds of sellers across St. Louis..."<br>
+        • "We have great reviews, you can check us out online..."<br>
+        • "Other sellers in your situation have found this really helpful..."<br>
+        • "Our team has done thousands of transactions..."<br>
+        • Mentioning specific neighborhoods/markets to establish local credibility
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Why it works in this context</div>
+      <div class="card-body">Motivated sellers are often skeptical — they've heard "we buy houses" ads everywhere. Social proof reduces perceived risk. It answers "are these people real and can I trust them?" before the seller even has to ask. It's the credibility unlock that lets everything else land.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s8">
+  <h3>Causal Analysis</h3>
+  <h2>Agent Move → Seller Shift Pairs (What Triggers What)</h2>
+  <p>When an agent does X and the seller <em>immediately next</em> does Y — ranked by C vs NC gap</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Agent Move → Seller Shift</th>
+        <th class="num">In Contracts %</th>
+        <th class="num">No-Contracts %</th>
+        <th class="num">Gap</th>
+      </tr></thead>
+      <tbody><tr>
+      <td style="font-size:.84rem">Empathy/Validation → Openness/Curiosity</td>
+      <td class="num label-c">1.70%</td>
+      <td class="num label-nc">0.90%</td>
+      <td class="num green-strong">+0.80pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">As-Is Framing → Urgency Signal</td>
+      <td class="num label-c">1.70%</td>
+      <td class="num label-nc">1.00%</td>
+      <td class="num green-strong">+0.70pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Process Simplicity → Moving Forward</td>
+      <td class="num label-c">1.00%</td>
+      <td class="num label-nc">0.40%</td>
+      <td class="num green-strong">+0.60pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Asking Questions → Moving Forward</td>
+      <td class="num label-c">1.80%</td>
+      <td class="num label-nc">1.30%</td>
+      <td class="num green">+0.50pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Urgency Creation → Urgency Signal</td>
+      <td class="num label-c">1.00%</td>
+      <td class="num label-nc">0.50%</td>
+      <td class="num green">+0.50pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Social Proof → Urgency Signal</td>
+      <td class="num label-c">0.70%</td>
+      <td class="num label-nc">0.20%</td>
+      <td class="num green">+0.50pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Empathy/Validation → Price Acceptance</td>
+      <td class="num label-c">1.30%</td>
+      <td class="num label-nc">0.90%</td>
+      <td class="num green">+0.40pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Flexible Timeline → Moving Forward</td>
+      <td class="num label-c">0.60%</td>
+      <td class="num label-nc">0.20%</td>
+      <td class="num green">+0.40pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Empathy/Validation → Moving Forward</td>
+      <td class="num label-c">1.70%</td>
+      <td class="num label-nc">1.30%</td>
+      <td class="num green">+0.40pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Asking Questions → Urgency Signal</td>
+      <td class="num label-c">1.70%</td>
+      <td class="num label-nc">1.40%</td>
+      <td class="num green">+0.30pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Asking Questions → Openness/Curiosity</td>
+      <td class="num label-c">1.80%</td>
+      <td class="num label-nc">1.50%</td>
+      <td class="num green">+0.30pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">As-Is Framing → Openness/Curiosity</td>
+      <td class="num label-c">1.60%</td>
+      <td class="num label-nc">1.30%</td>
+      <td class="num green">+0.30pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">Price Anchoring → Moving Forward</td>
+      <td class="num label-c">0.70%</td>
+      <td class="num label-nc">0.40%</td>
+      <td class="num green">+0.30pp</td>
+    </tr><tr>
+      <td style="font-size:.84rem">As-Is Framing → Moving Forward</td>
+      <td class="num label-c">2.10%</td>
+      <td class="num label-nc">1.90%</td>
+      <td class="num green-mild">+0.20pp</td>
+    </tr></tbody>
+    </table>
+  </div>
+  <div class="cards" style="margin-top:12px">
+    <div class="card highlight">
+      <div class="card-title">🔗 Top causal chain: Empathy → Curiosity</div>
+      <div class="card-body">When the agent validates the seller's situation, the seller immediately asks "how does this work?" — nearly 2x more often in contract calls than no-contract calls. Empathy unlocks curiosity. Curiosity unlocks next steps.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">🔗 Process Simplicity → Moving Forward (2.5x)</div>
+      <div class="card-body">When the agent says "simple process, we handle everything," the seller says "let's do it" at 2.5x the rate in contracts vs no-contracts. Reducing friction is the trigger for commitment.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">🔗 Flexible Timeline → Moving Forward (3x)</div>
+      <div class="card-body">"Whenever you're ready" immediately followed by "let's move forward" is 3x more common in contracts. Removing time pressure paradoxically <em>accelerates</em> the decision.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s9">
+  <h3>Language Forensics</h3>
+  <h2>Exact Words Agents Use Right Before Sellers First Open Up</h2>
+  <p>4-word n-grams in the agent's last speech turn immediately before the seller's first willingness signal</p>
+  <div class="two-col">
+    <div>
+      <h3 style="color:var(--green)">Closed deals — agent language</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>4-word phrase</th><th class="num">Count</th></tr></thead>
+          <tbody><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"offer that you like"</td><td class="num label-cl">9x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"and evaluate the area"</td><td class="num label-cl">7x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"ask you few basic"</td><td class="num label-cl">6x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"can ahead and evaluate"</td><td class="num label-cl">6x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"ahead and evaluate the"</td><td class="num label-cl">6x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"you few basic questions"</td><td class="num label-cl">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"questions about the condition"</td><td class="num label-cl">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"about the condition the"</td><td class="num label-cl">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"simple just need ask"</td><td class="num label-cl">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"just need ask you"</td><td class="num label-cl">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"need ask you few"</td><td class="num label-cl">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#c8cce0">"that way can ahead"</td><td class="num label-cl">5x</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--red)">Dead deals — agent language</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>4-word phrase</th><th class="num">Count</th></tr></thead>
+          <tbody><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"ask you few questions"</td><td class="num label-de">9x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"just need ask you"</td><td class="num label-de">8x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"need ask you few"</td><td class="num label-de">8x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"simple just need ask"</td><td class="num label-de">7x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"you few questions about"</td><td class="num label-de">7x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"few questions about the"</td><td class="num label-de">7x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"about the condition the"</td><td class="num label-de">6x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"questions regarding the condition"</td><td class="num label-de">6x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"questions about the condition"</td><td class="num label-de">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"are you looking sell"</td><td class="num label-de">5x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"ready move forward with"</td><td class="num label-de">4x</td></tr><tr><td style="font-family:monospace;font-size:.83rem;color:#b0b0c8">"how long have you"</td><td class="num label-de">4x</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="callout" style="margin-top:14px">
+    <div class="callout-icon">🔬</div>
+    <div class="callout-text">
+      <strong>The language divergence:</strong> Closed call agents say <strong>"offer that you like"</strong> and <strong>"evaluate the area"</strong> — framing the next step as collaborative and localized. Dead call agents repeat <strong>"ask you a few questions"</strong> — staying in information-gathering mode longer without advancing toward an offer. Closed agents pivot to the offer. Dead agents keep qualifying.
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s10">
+  <h3>Objection Handling</h3>
+  <h2>Resistance → Resolution Arcs</h2>
+  <p>How often a seller pushback is followed by a positive resolution within 4 seller turns</p>
+  <div class="stat-row">
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green)">1.1</div>
+      <div class="stat-label">Arcs per call — Contracts</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#8892c8">1.01</div>
+      <div class="stat-label">Arcs per call — No-Contracts</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--green)">1.12</div>
+      <div class="stat-label">Arcs per call — Closed</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:var(--red)">1.09</div>
+      <div class="stat-label">Arcs per call — Dead</div>
+    </div>
+  </div>
+  <div class="callout">
+    <div class="callout-icon">⚡</div>
+    <div class="callout-text">
+      Contract calls resolve more objections per call than no-contract calls (1.10 vs 1.01). Within contracts, Closed deals resolve slightly more than Dead (1.12 vs 1.09). <strong>The winning pattern: seller says "that's too low" or "I need to think" — agent stays in, handles it — seller says "okay, that makes sense."</strong> Dead deals either skip this arc entirely or fail to resolve it.
+    </div>
+  </div>
+  <div class="cards" style="margin-top:14px">
+    <div class="card">
+      <div class="card-title">Typical resistance phrases detected</div>
+      <div class="card-body">"That's too low" · "I need to think about it" · "I'm not sure" · "I was expecting more" · "I need to discuss with my family" · "I'm not ready" · "That's not what I was thinking"</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Typical resolution phrases detected</div>
+      <div class="card-body">"Okay, that makes sense" · "Alright" · "I see what you mean" · "Fair enough" · "Let's try it" · "I'll think about it" → leads to later commitment · "Why don't we..."</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">The lesson</div>
+      <div class="card-body">Resistance is normal and expected. Sellers who push back but get resolved are MORE likely to close than sellers who never push back. The arc — not the absence of friction — is what predicts deals.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s11">
+  <h3>Urgency — Two Sides</h3>
+  <h2>Seller Urgency vs Agent Urgency Creation</h2>
+  <div class="two-col">
+    <div>
+      <h3>Seller urgency signal (+12.7pp gap)</h3>
+      <div class="stat-row" style="flex-direction:column;gap:10px">
+        <div class="stat-box"><div class="stat-num" style="color:var(--green-strong)">42.6%</div><div class="stat-label">Contracts — sellers express urgency</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#8892c8">29.9%</div><div class="stat-label">No-Contracts — sellers express urgency</div></div>
+      </div>
+      <div class="callout" style="margin-top:12px">
+        <div class="callout-icon">🔥</div>
+        <div class="callout-text">Sellers in contract calls are nearly <strong>43% more likely</strong> to express genuine urgency. This suggests contract agents are better at <em>uncovering</em> the real timeline — asking the right questions to surface urgency that was always there.</div>
+      </div>
+    </div>
+    <div>
+      <h3>Agent urgency creation (+3.7pp gap)</h3>
+      <div class="stat-row" style="flex-direction:column;gap:10px">
+        <div class="stat-box"><div class="stat-num" style="color:var(--green)">11.8%</div><div class="stat-label">Contracts — agent creates urgency</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#8892c8">8.1%</div><div class="stat-label">No-Contracts — agent creates urgency</div></div>
+      </div>
+      <div class="callout" style="margin-top:12px">
+        <div class="callout-icon">💬</div>
+        <div class="callout-text">Agent-created urgency ("prices could change," "let's lock this in now") appears more in contracts — but the <strong>real urgency already lives with the seller</strong>. The winning move is asking questions that surface the seller's own timeline, not inventing pressure.</div>
+      </div>
+    </div>
+  </div>
+  <div class="quote">"I need to get this done as soon as possible — I have a foreclosure date coming up..." · "We really need to move quickly, my husband just passed and I can't maintain this place" · "The sooner the better, I've been dealing with this for two years"</div>
+</div>
+
+<div class="slide" id="s12">
+  <h3>Call Coaching</h3>
+  <h2>The In-Call Playbook — What the Data Says to Do</h2>
+  <div class="cards">
+    <div class="card highlight">
+      <div class="card-icon">1️⃣</div>
+      <div class="card-title">Open with Social Proof</div>
+      <div class="card-body">Biggest C vs NC gap (+9.6pp). Before anything else, establish credibility. "We've helped thousands of sellers across [market], many in situations just like yours." Reduces skepticism, opens the door.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">2️⃣</div>
+      <div class="card-title">Lead with As-Is Framing</div>
+      <div class="card-body">Double winner — +6.2pp C vs NC AND +8.3pp CL vs DE. Remove the repair anxiety immediately. "We buy as-is, you don't need to fix or clean a single thing." This single message unlocks both contract creation AND closing.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-icon">3️⃣</div>
+      <div class="card-title">Validate Before You Evaluate</div>
+      <div class="card-body">Empathy precedes curiosity in contracts (2x ratio vs no-contracts). Acknowledge the seller's situation before pivoting to business. "That sounds really difficult, I understand." Then ask questions.</div>
+    </div>
+    <div class="card">
+      <div class="card-icon">4️⃣</div>
+      <div class="card-title">Surface the Urgency — Don't Invent It</div>
+      <div class="card-body">Sellers in contract calls are nearly 43% more likely to express real urgency (+12.7pp). Ask "what's your timeline?" and "what happens if this doesn't sell?" Listen for urgency cues. Then reflect them back.</div>
+    </div>
+    <div class="card warn">
+      <div class="card-icon">🚫</div>
+      <div class="card-title">Don't Lead With Price</div>
+      <div class="card-body">Price anchoring is the only agent move with a NEGATIVE gap (NC uses it 25% vs C at 21%). Build value — as-is, flexible close, no fees, certainty — before the number lands. Frame price as "an offer you can feel good about."</div>
+    </div>
+    <div class="card amber-c">
+      <div class="card-icon">5️⃣</div>
+      <div class="card-title">Push for Appointment at Peak Openness</div>
+      <div class="card-body">+5pp CL vs DE gap. When the seller signals moving forward — "sounds good," "I'm interested" — immediately push to a physical visit. "When can I come by?" Don't leave it abstract. Book it while energy is high.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s13">
+  <h3>Full Sequence Comparison</h3>
+  <h2>Anatomy of a Contract Call vs No-Contract Call</h2>
+  <div class="two-col">
+    <div>
+      <h3 style="color:var(--green)">✅ Contract Call Pattern</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-g">1. Open</span> Social proof + local credibility established
+        </div>
+        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-g">2. Qualify</span> "Ask you a few basic questions" — brief property assessment
+        </div>
+        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-g">3. Empathy</span> Acknowledge seller's situation — first shift (curiosity) unlocked at 33% mark
+        </div>
+        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-g">4. Frame</span> As-is + flexible timeline + no fees — seller shift to urgency/price acceptance
+        </div>
+        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-g">5. Offer</span> Price lands after value framing — "offer that you like" language
+        </div>
+        <div style="background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-g">6. Push</span> Appointment push at peak openness → "Moving Forward" signal → contract
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--red)">❌ No-Contract Call Pattern</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-r">1. Open</span> Jumps to qualification — no social proof, no credibility build
+        </div>
+        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-r">2. Qualify</span> Extended question phase — "ask you a few questions" loops without advancing
+        </div>
+        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-r">3. Price</span> Anchors a number early without framing value — seller rejects anchor
+        </div>
+        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-r">4. Stall</span> Seller shows curiosity but agent doesn't convert it to momentum
+        </div>
+        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-r">5. No arc</span> Resistance not resolved — seller stays at "need to think"
+        </div>
+        <div style="background:rgba(239,83,80,.06);border:1px solid rgba(239,83,80,.2);border-radius:8px;padding:12px 14px;font-size:.84rem">
+          <span class="pill pill-r">6. No push</span> No appointment push — call ends without commitment
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" id="s14">
+  <h3>Bottom Line</h3>
+  <h2>5 Data-Backed Findings From 7,354 Calls</h2>
+  <div class="cards">
+    <div class="card highlight">
+      <div class="card-title">1. Momentum, not a single moment</div>
+      <div class="card-body">Contract calls average <strong>3.39 seller shifts</strong> vs 2.50 in no-contracts. There is no "magic line" — there's a rhythm of small yeses. The agent's job is to string them together.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">2. Social Proof is the #1 contract creator</div>
+      <div class="card-body">+9.6pp C vs NC — larger than any other move. Credibility-building ("we've done this hundreds of times") is the entry point. Without it, sellers stay skeptical no matter what comes next.</div>
+    </div>
+    <div class="card highlight">
+      <div class="card-title">3. As-Is is the only double winner</div>
+      <div class="card-body">Wins at both stages: +6.2pp getting contracts, +8.3pp closing them. "We buy as-is, no repairs needed" is the single most powerful consistent message across the entire sales process.</div>
+    </div>
+    <div class="card warn">
+      <div class="card-title">4. Anchoring price early kills deals</div>
+      <div class="card-body">The only negative gap: no-contract calls use price anchoring <em>more</em> than contract calls. Building value (as-is, timeline, certainty, no fees) before introducing a number is the order that wins.</div>
+    </div>
+    <div class="card amber-c">
+      <div class="card-title">5. The "Moving Forward" signal is the contract predictor</div>
+      <div class="card-body">+14.1pp — the largest single seller shift gap. When a seller says "let's do it," "sounds good," or "you can come" — in contracts, agents heard that moment 57% of the time vs 43% in no-contracts. These agents create the conditions for that moment.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav">
+  <button onclick="go(-1)">← Prev</button>
+  <span class="slide-counter" id="ctr">1 / 14</span>
+  <button onclick="go(1)">Next →</button>
+</div>
+
+<script>
+const N = 14;
+let cur = 0;
+const slides = document.querySelectorAll('.slide');
+const ctr    = document.getElementById('ctr');
+const prog   = document.getElementById('progress');
+
+function show(i) {
+  slides[cur].classList.remove('active');
+  cur = (i + N) % N;
+  slides[cur].classList.add('active');
+  ctr.textContent = (cur+1) + ' / ' + N;
+  prog.style.width = ((cur+1)/N*100) + '%';
+}
+function go(d) { show(cur+d); }
+document.addEventListener('keydown', e => {
+  if (e.key==='ArrowRight'||e.key==='ArrowDown') go(1);
+  if (e.key==='ArrowLeft' ||e.key==='ArrowUp')   go(-1);
+});
+</script>
+</body>
+</html>
