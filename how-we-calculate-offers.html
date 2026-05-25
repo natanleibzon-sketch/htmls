@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Much Will an Investor Pay for Your House? | Doctor Homes</title>
+  <meta name="description" content="See the exact math behind every cash offer — what goes in, what comes out, and what you actually walk away with. Plain English. No jargon. No pressure.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="How Much Will a Cash Buyer Pay for Your House?">
+  <meta property="og:description" content="The real math behind cash offers, explained plainly. Compare what you'd net listing vs. selling for cash — before you decide.">
+  <meta property="og:type" content="article">
+  <link rel="canonical" href="https://doctorhomes.com/how-we-calculate-offers/">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do cash buyers calculate their offers?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cash buyers start with what your house could sell for on the open market once fully repaired. They subtract the cost of those repairs, their selling and carrying costs, and their operating margin. The result is your cash offer. The gap between the listing price and the cash offer is usually smaller than sellers expect once you account for repairs, commissions, and carrying costs you'd pay anyway."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is 70% of market value a fair cash offer?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The 70% figure is a rough industry benchmark, not a rule. Offers vary based on the condition of the home, local repair costs, and current market demand. The more useful comparison is what you'd actually net after listing — once you subtract commissions, repairs, and carrying costs."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What if I think the cash offer is too low?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "You're never obligated to accept. We show you both sides of the math — what we're offering and what you'd realistically net by listing. If listing makes more sense for your situation, we'll tell you honestly."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is Doctor Homes different from Opendoor or Offerpad?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "iBuyers like Opendoor won't buy homes that need significant repairs, and they charge service fees of 5–8%. Doctor Homes buys homes in any condition — fixer-uppers, inherited homes, properties with tenants — with no fees and no commissions. We're a local team, not a national algorithm."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do I have to decide quickly?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. There's no expiration deadline, no countdown, no pressure. Take as long as you need to compare the offer, talk to your family, or get a second opinion. The offer is yours to hold, compare, or walk away from."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Will you buy my house if it needs a lot of work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. We've bought homes with foundation problems, fire damage, hoarding situations, water damage, and homes that have been vacant for years. Condition doesn't stop us — it factors into the math. We walk through the property, assess what's needed, and make an offer based on the real numbers."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:        #1A2E4A;
+      --navy-mid:    #243F68;
+      --orange:      #E07B39;
+      --orange-dk:   #C5681F;
+      --green:       #1E7A3C;
+      --green-bg:    #EBF5EF;
+      --red:         #C0392B;
+      --red-bg:      #FEF2F2;
+      --gray-50:     #F7F8FA;
+      --gray-100:    #EFF2F7;
+      --gray-200:    #E2E8F0;
+      --gray-400:    #A0AEC0;
+      --gray-600:    #718096;
+      --gray-700:    #4A5568;
+      --text:        #1E2A3A;
+      --white:       #ffffff;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 14px rgba(0,0,0,.10);
+      --shadow-lg:   0 12px 36px rgba(0,0,0,.13);
+      --r:           10px;
+      --r-lg:        16px;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--text);
+      background: var(--white);
+    }
+    img { max-width: 100%; }
+    a { color: var(--orange); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .wrap      { max-width: 860px;  margin: 0 auto; padding: 0 24px; }
+    .wrap-wide { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+    /* ─── NAVBAR ─── */
+    .nav {
+      background: var(--navy);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: var(--shadow-md);
+    }
+    .nav__inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1080px; margin: 0 auto; padding: 14px 24px;
+    }
+    .nav__logo { font-size: 20px; font-weight: 800; color: #fff; }
+    .nav__logo span { color: var(--orange); }
+    .nav__right { display: flex; align-items: center; gap: 20px; }
+    .nav__tel { color: rgba(255,255,255,.85); font-size: 15px; font-weight: 600; }
+    .nav__tel:hover { color: #fff; text-decoration: none; }
+    .btn-nav {
+      background: var(--orange); color: #fff;
+      padding: 9px 20px; border-radius: 6px;
+      font-size: 14px; font-weight: 700;
+      transition: background .18s;
+    }
+    .btn-nav:hover { background: var(--orange-dk); text-decoration: none; }
+
+    /* ─── BREADCRUMB ─── */
+    .breadcrumb { background: #142236; padding: 9px 0; }
+    .breadcrumb__inner {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 13px; color: rgba(255,255,255,.5);
+      max-width: 1080px; margin: 0 auto; padding: 0 24px;
+    }
+    .breadcrumb__inner a { color: rgba(255,255,255,.5); }
+    .breadcrumb__inner a:hover { color: #fff; text-decoration: none; }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: linear-gradient(140deg, #142236 0%, var(--navy-mid) 100%);
+      padding: 70px 0 60px; color: #fff;
+    }
+    .hero__eye {
+      font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--orange); margin-bottom: 14px;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 800; line-height: 1.18; letter-spacing: -.5px;
+      margin-bottom: 18px; max-width: 680px;
+    }
+    .hero__sub {
+      font-size: 18px; color: rgba(255,255,255,.78);
+      max-width: 560px; margin-bottom: 34px;
+    }
+    .hero__ctas { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 42px; }
+    .btn-primary {
+      display: inline-block;
+      background: var(--orange); color: #fff;
+      padding: 16px 34px; border-radius: 8px;
+      font-size: 17px; font-weight: 700;
+      border: none; cursor: pointer;
+      transition: background .18s, transform .14s;
+    }
+    .btn-primary:hover { background: var(--orange-dk); transform: translateY(-1px); text-decoration: none; }
+    .hero__note { font-size: 13px; color: rgba(255,255,255,.55); }
+
+    .trust-bar {
+      display: flex; flex-wrap: wrap; gap: 8px 28px;
+      padding-top: 28px; border-top: 1px solid rgba(255,255,255,.1);
+    }
+    .trust-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: rgba(255,255,255,.75); }
+    .trust-item strong { color: #fff; }
+
+    /* ─── SECTIONS ─── */
+    section { padding: 64px 0; }
+    .section--gray { background: var(--gray-50); }
+
+    .eyebrow {
+      font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--orange); margin-bottom: 10px;
+    }
+    h2 {
+      font-size: clamp(24px, 3vw, 34px);
+      font-weight: 800; line-height: 1.2; letter-spacing: -.3px;
+      color: var(--navy); margin-bottom: 16px;
+    }
+    h3 { font-size: 19px; font-weight: 700; color: var(--navy); margin-bottom: 10px; line-height: 1.3; }
+    p { margin-bottom: 16px; color: var(--gray-700); }
+    p:last-child { margin-bottom: 0; }
+    .lead { font-size: 19px; line-height: 1.65; color: var(--gray-700); margin-bottom: 24px; }
+
+    /* ─── CALLOUT ─── */
+    .callout {
+      background: var(--gray-50); border-left: 4px solid var(--orange);
+      border-radius: 0 var(--r) var(--r) 0;
+      padding: 20px 24px; margin: 28px 0;
+    }
+    .callout p { color: var(--text); margin: 0; }
+    .callout strong { color: var(--navy); }
+
+    /* ─── FORMULA ─── */
+    .formula {
+      border-radius: var(--r-lg); overflow: hidden;
+      box-shadow: var(--shadow-md); margin: 36px 0;
+    }
+    .f-row {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 24px; background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .f-row:last-child { border-bottom: none; background: var(--navy); }
+    .f-op {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 18px; flex-shrink: 0;
+    }
+    .f-op--plus  { background: var(--green);  color: #fff; }
+    .f-op--minus { background: var(--red-bg); color: var(--red); }
+    .f-op--eq    { background: var(--orange); color: #fff; }
+    .f-content { flex: 1; }
+    .f-label { font-size: 15px; font-weight: 700; color: var(--text); }
+    .f-row:last-child .f-label { color: #fff; }
+    .f-desc { font-size: 13px; color: var(--gray-600); margin: 2px 0 0; }
+    .f-row:last-child .f-desc { color: rgba(255,255,255,.7); }
+    .f-val { font-size: 17px; font-weight: 800; white-space: nowrap; }
+    .f-val--green  { color: var(--green); }
+    .f-val--red    { color: var(--red); }
+    .f-val--white  { color: #fff; }
+    .f-source { font-size: 13px; color: var(--gray-600); margin-top: 10px; }
+
+    /* ─── EXAMPLE CARDS ─── */
+    .eg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 32px 0; }
+    .eg-card { background: #fff; border: 1px solid var(--gray-200); border-radius: var(--r-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .eg-head { background: var(--navy); padding: 16px 20px; }
+    .eg-head h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: rgba(255,255,255,.6); margin-bottom: 4px; }
+    .eg-head p  { font-size: 17px; font-weight: 800; color: #fff; margin: 0; }
+    .eg-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px; border-bottom: 1px solid var(--gray-200); font-size: 15px;
+    }
+    .eg-row:last-child { border-bottom: none; }
+    .eg-row__lbl { color: var(--gray-700); }
+    .eg-row__val { font-weight: 700; }
+    .eg-row__val--g { color: var(--green); }
+    .eg-row__val--r { color: var(--red); }
+    .eg-row--offer { background: var(--orange); }
+    .eg-row--offer .eg-row__lbl { color: rgba(255,255,255,.85); font-weight: 700; }
+    .eg-row--offer .eg-row__val { color: #fff; font-size: 17px; }
+
+    /* ─── FACTORS ─── */
+    .factors { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 36px; }
+    .factor {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--r); padding: 24px;
+      box-shadow: var(--shadow-sm); transition: box-shadow .2s;
+    }
+    .factor:hover { box-shadow: var(--shadow-md); }
+    .factor__icon { font-size: 28px; margin-bottom: 12px; }
+    .factor h3 { font-size: 16px; margin-bottom: 8px; }
+    .factor p  { font-size: 14px; margin: 0; }
+
+    /* ─── COMPARISON TABLE ─── */
+    .table-wrap {
+      overflow-x: auto; margin-top: 32px;
+      border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+    }
+    .comp {
+      width: 100%; border-collapse: collapse;
+      font-size: 15px; background: #fff;
+    }
+    .comp thead tr { background: var(--navy); color: #fff; }
+    .comp th { padding: 16px 20px; text-align: left; font-size: 14px; font-weight: 700; }
+    .comp th:first-child { width: 36%; }
+    .comp th.hl { background: var(--orange); }
+    .comp td { padding: 13px 20px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+    .comp tbody tr:nth-child(even) td { background: var(--gray-50); }
+    .comp tbody tr:nth-child(even) td.hl { background: #fdf3ec; }
+    .comp td.hl { background: #fdf3ec; }
+    .comp tbody tr:last-child td { border-bottom: none; }
+    .comp .row-total td { background: var(--navy); color: #fff; font-weight: 800; font-size: 16px; border: none; }
+    .comp .row-total td.hl { background: var(--orange); }
+    .chk  { color: var(--green);  font-weight: 700; }
+    .crs  { color: var(--red); }
+    .badge-cash {
+      display: inline-block; background: var(--green-bg); color: var(--green);
+      font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+    }
+
+    /* ─── TWO-COL FIT/NOT-FIT ─── */
+    .fit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
+    .fit-box { background: #fff; border-radius: var(--r-lg); padding: 28px; }
+    .fit-box--yes { border: 2px solid var(--green); }
+    .fit-box--no  { border: 1px solid var(--gray-200); }
+    .fit-box h3 { font-size: 17px; margin-bottom: 14px; }
+    .fit-box h3.yes { color: var(--green); }
+    .fit-box h3.no  { color: var(--gray-700); }
+    .fit-box ul { list-style: none; }
+    .fit-box ul li {
+      font-size: 15px; color: var(--gray-700);
+      padding: 8px 0; border-bottom: 1px solid var(--gray-200);
+    }
+    .fit-box ul li:last-child { border-bottom: none; }
+
+    /* ─── HONEST BOX ─── */
+    .honest {
+      background: var(--navy); color: #fff;
+      border-radius: var(--r-lg); padding: 36px 40px; margin-top: 32px;
+    }
+    .honest h3 { color: #fff; font-size: 20px; margin-bottom: 14px; }
+    .honest p  { color: rgba(255,255,255,.8); }
+    .honest ul { list-style: none; margin-top: 14px; }
+    .honest ul li {
+      font-size: 16px; color: rgba(255,255,255,.8);
+      padding: 7px 0 7px 28px; position: relative;
+    }
+    .honest ul li::before { content: '✓'; position: absolute; left: 0; color: var(--orange); font-weight: 800; }
+
+    /* ─── TESTIMONIALS ─── */
+    .testi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-top: 36px; }
+    .testi {
+      background: #fff; border: 1px solid var(--gray-200);
+      border-radius: var(--r-lg); padding: 28px; box-shadow: var(--shadow-sm);
+    }
+    .testi__stars { color: #F5A623; font-size: 15px; letter-spacing: 2px; margin-bottom: 14px; }
+    .testi__body { font-size: 15px; line-height: 1.65; color: var(--text); font-style: italic; margin-bottom: 20px; }
+    .testi__body em { font-style: normal; font-weight: 700; color: var(--navy); }
+    .testi__author { display: flex; align-items: center; gap: 12px; }
+    .testi__avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--gray-100); display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; color: var(--navy); flex-shrink: 0;
+    }
+    .testi__name { font-weight: 700; font-size: 15px; color: var(--navy); }
+    .testi__src  { font-size: 12px; color: var(--gray-600); }
+    .bbb { display: inline-block; background: var(--green-bg); color: var(--green); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+
+    /* ─── FOUNDER BLOCK ─── */
+    .founder {
+      display: flex; gap: 36px; align-items: flex-start;
+      background: var(--gray-50); border-radius: var(--r-lg);
+      padding: 36px; border: 1px solid var(--gray-200); margin-top: 48px;
+    }
+    .founder__photo {
+      width: 90px; height: 90px; border-radius: 50%;
+      background: var(--navy); color: #fff; font-size: 32px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-weight: 800;
+    }
+    .founder__quote { font-size: 16px; line-height: 1.7; color: var(--text); font-style: italic; margin-bottom: 14px; }
+    .founder__sig { font-weight: 700; color: var(--navy); font-style: normal; font-size: 15px; }
+    .founder__title { font-size: 13px; color: var(--gray-600); }
+
+    /* ─── FAQ ─── */
+    .faq { margin-top: 32px; }
+    .faq-item { border-bottom: 1px solid var(--gray-200); }
+    .faq-item:first-child { border-top: 1px solid var(--gray-200); }
+    .faq-q {
+      width: 100%; text-align: left; background: none; border: none;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; padding: 20px 0;
+      font-size: 17px; font-weight: 700; color: var(--navy); line-height: 1.4;
+      font-family: inherit;
+    }
+    .faq-q:hover { color: var(--orange); }
+    .faq-icon { font-size: 22px; color: var(--orange); transition: transform .2s; flex-shrink: 0; }
+    .faq-a { display: none; padding: 0 0 20px; font-size: 16px; color: var(--gray-700); line-height: 1.7; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+
+    /* ─── CTA / FORM ─── */
+    .cta-section {
+      background: linear-gradient(140deg, #142236 0%, var(--navy-mid) 100%);
+      padding: 72px 0; color: #fff; text-align: center;
+    }
+    .cta-section h2 { color: #fff; margin-bottom: 12px; }
+    .cta-section > .wrap > p { color: rgba(255,255,255,.78); font-size: 18px; margin-bottom: 36px; }
+    .offer-form {
+      background: #fff; border-radius: var(--r-lg); padding: 36px;
+      max-width: 520px; margin: 0 auto; box-shadow: var(--shadow-lg); text-align: left;
+    }
+    .offer-form h3 { color: var(--navy); font-size: 20px; margin-bottom: 6px; }
+    .offer-form__note { font-size: 14px; color: var(--gray-600); margin-bottom: 24px; }
+    .fg { margin-bottom: 16px; }
+    .fg label { display: block; font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+    .fg input {
+      width: 100%; padding: 13px 16px;
+      border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-size: 16px; color: var(--text); outline: none;
+      transition: border-color .2s; font-family: inherit;
+    }
+    .fg input:focus { border-color: var(--orange); }
+    .fg input::placeholder { color: var(--gray-400); }
+    .btn-form {
+      width: 100%; padding: 16px; background: var(--orange); color: #fff;
+      border: none; border-radius: 8px; font-size: 17px; font-weight: 700;
+      cursor: pointer; margin-top: 8px; font-family: inherit;
+      transition: background .18s;
+    }
+    .btn-form:hover { background: var(--orange-dk); }
+    .form-priv { font-size: 12px; color: var(--gray-600); text-align: center; margin-top: 12px; margin-bottom: 0; }
+
+    /* ─── FOOTER ─── */
+    .footer { background: #0F1E2E; color: rgba(255,255,255,.6); padding: 52px 0 24px; }
+    .footer__grid {
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 40px;
+      max-width: 1080px; margin: 0 auto; padding: 0 24px 40px;
+    }
+    .footer__logo { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 12px; }
+    .footer__logo span { color: var(--orange); }
+    .footer__desc { font-size: 14px; line-height: 1.65; }
+    .footer__nap { font-size: 14px; line-height: 1.9; margin-top: 16px; color: rgba(255,255,255,.65); }
+    .footer__nap a { color: rgba(255,255,255,.65); }
+    .footer__nap a:hover { color: #fff; text-decoration: none; }
+    .footer h4 { color: #fff; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 14px; }
+    .footer ul { list-style: none; }
+    .footer ul li { margin-bottom: 8px; }
+    .footer ul li a { color: rgba(255,255,255,.55); font-size: 14px; }
+    .footer ul li a:hover { color: #fff; text-decoration: none; }
+    .footer__bottom {
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding: 20px 24px 0; font-size: 13px; text-align: center;
+      max-width: 1080px; margin: 0 auto;
+    }
+    .footer__bottom a { color: rgba(255,255,255,.4); }
+
+    /* ─── UTILITY ─── */
+    .mt-16 { margin-top: 16px; }
+    .mt-24 { margin-top: 24px; }
+    .mt-32 { margin-top: 32px; }
+    .t-small { font-size: 13px; color: var(--gray-600); }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 720px) {
+      .nav__tel { display: none; }
+      .eg-grid  { grid-template-columns: 1fr; }
+      .fit-grid { grid-template-columns: 1fr; }
+      .footer__grid { grid-template-columns: 1fr; gap: 24px; }
+      .founder  { flex-direction: column; gap: 20px; }
+      .offer-form { padding: 24px; }
+      .honest   { padding: 24px 20px; }
+      .comp th, .comp td { padding: 11px 13px; font-size: 14px; }
+    }
+    @media (max-width: 480px) {
+      section { padding: 48px 0; }
+      .hero   { padding: 48px 0 40px; }
+      .testi-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ NAVBAR ═══ -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <div class="nav__inner">
+    <div class="nav__logo">Doctor<span>Homes</span></div>
+    <div class="nav__right">
+      <a href="tel:+15551234567" class="nav__tel">📞 (555) 123-4567</a>
+      <a href="#get-offer" class="btn-nav">Get a free offer</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ BREADCRUMB ═══ -->
+<div class="breadcrumb">
+  <div class="breadcrumb__inner">
+    <a href="/">Home</a> › <a href="/learn/">Learn</a> › <span>How cash buyers calculate offers</span>
+  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<header class="hero">
+  <div class="wrap">
+    <p class="hero__eye">Plain-English math — no jargon</p>
+    <h1>How Much Will a Cash Buyer Pay for Your House?</h1>
+    <p class="hero__sub">We'll show you the exact numbers behind every offer — what goes in, what comes out, and what you actually walk away with. Then you decide.</p>
+    <div class="hero__ctas">
+      <a href="#get-offer" class="btn-primary">See what your house is worth</a>
+      <span class="hero__note">No pressure. No commitment. Just a real number.</span>
+    </div>
+    <div class="trust-bar">
+      <div class="trust-item">🏠&nbsp;<span><strong>1,500+</strong> homes bought since 2016</span></div>
+      <div class="trust-item">⭐&nbsp;<span><strong>4.9 stars</strong> · 1,545 reviews</span></div>
+      <div class="trust-item">✅&nbsp;<span><strong>BBB Accredited</strong> · A+ rating</span></div>
+      <div class="trust-item">📍&nbsp;<span>Local teams in <strong>Detroit, Cleveland, Indianapolis, St. Louis, Kansas City &amp; SF Bay Area</strong></span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ S1: THE SHORT ANSWER ═══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">The honest answer</p>
+    <h2>We pay less than what you'd list for. Here's exactly why — and how much.</h2>
+    <p class="lead">Cash buyers — including us — offer less than what a home would sell for on the open market after it's been fully repaired and staged. That gap exists for a real reason. This page explains the math so you can decide whether a cash offer makes sense for your situation.</p>
+
+    <div class="callout">
+      <p><strong>The short version:</strong> A cash offer = what your house could sell for once fixed up, minus the cost to fix it up, minus selling and carrying costs, minus the buyer's operating margin. What surprises most sellers is how small that gap is once you compare it to what listing actually costs you.</p>
+    </div>
+
+    <p>Most sellers compare the cash offer to their Zillow number and feel like they're leaving money on the table. The real comparison is what you'd actually net after repairs, commissions, and the 60–120 days it takes to close a traditional sale. That number looks different.</p>
+  </div>
+</section>
+
+<!-- ═══ S2: THE FORMULA ═══ -->
+<section class="section--gray">
+  <div class="wrap">
+    <p class="eyebrow">The calculation</p>
+    <h2>The exact math behind every cash offer</h2>
+    <p>Every cash buyer uses some version of this formula — whether they show it to you or not. We'd rather show it.</p>
+
+    <div class="formula">
+      <div class="f-row">
+        <div class="f-op f-op--plus">1</div>
+        <div class="f-content">
+          <div class="f-label">What your house could sell for once fully repaired</div>
+          <p class="f-desc">Based on comparable sales — similar homes in your neighborhood that sold recently in updated, move-in-ready condition.</p>
+        </div>
+        <div class="f-val f-val--green">$200,000</div>
+      </div>
+      <div class="f-row">
+        <div class="f-op f-op--minus">−</div>
+        <div class="f-content">
+          <div class="f-label">Cost to repair and update the home</div>
+          <p class="f-desc">Everything the house needs to reach that sale price — roof, HVAC, kitchen, electrical, flooring. We walk through and estimate this ourselves. If we get it wrong, the loss is ours.</p>
+        </div>
+        <div class="f-val f-val--red">−$35,000</div>
+      </div>
+      <div class="f-row">
+        <div class="f-op f-op--minus">−</div>
+        <div class="f-content">
+          <div class="f-label">Selling costs and carrying costs</div>
+          <p class="f-desc">After we repair the home, we still have to sell it. Agent commissions (5–6%), closing costs, property taxes, insurance, and utilities during the months it takes to renovate and resell.</p>
+        </div>
+        <div class="f-val f-val--red">−$22,000</div>
+      </div>
+      <div class="f-row">
+        <div class="f-op f-op--minus">−</div>
+        <div class="f-content">
+          <div class="f-label">Our margin</div>
+          <p class="f-desc">This covers our team, absorbs the risk that repairs run over or the market shifts, and keeps the business running. Without this, we can't stay in business and keep buying houses.</p>
+        </div>
+        <div class="f-val f-val--red">−$20,000</div>
+      </div>
+      <div class="f-row">
+        <div class="f-op f-op--eq">=</div>
+        <div class="f-content">
+          <div class="f-label">Your cash offer</div>
+          <p class="f-desc">What we pay you — cash, as-is, on your timeline. No repairs, no commissions, no closing costs on your end.</p>
+        </div>
+        <div class="f-val f-val--white">~$123,000</div>
+      </div>
+    </div>
+
+    <p class="t-small">Numbers above are illustrative for a Midwest home with a fully-repaired sale value of $200,000. Your actual offer depends on your home's specific condition, local repair costs, and current market.</p>
+  </div>
+</section>
+
+<!-- ═══ S3: REAL EXAMPLES ═══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">Real numbers</p>
+    <h2>What this looks like in actual dollars</h2>
+    <p>Two side-by-side examples — a typical Midwest home and a Bay Area home — showing how the math plays out.</p>
+
+    <div class="eg-grid">
+      <div class="eg-card">
+        <div class="eg-head">
+          <h4>Midwest market</h4>
+          <p>3-bed · needs significant work</p>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Could sell for (fixed up)</span>
+          <span class="eg-row__val eg-row__val--g">$200,000</span>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Estimated repairs</span>
+          <span class="eg-row__val eg-row__val--r">−$35,000</span>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Selling + carrying costs</span>
+          <span class="eg-row__val eg-row__val--r">−$22,000</span>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Our margin</span>
+          <span class="eg-row__val eg-row__val--r">−$20,000</span>
+        </div>
+        <div class="eg-row eg-row--offer">
+          <span class="eg-row__lbl">Your cash offer</span>
+          <span class="eg-row__val">~$123,000</span>
+        </div>
+      </div>
+
+      <div class="eg-card">
+        <div class="eg-head">
+          <h4>SF Bay Area market</h4>
+          <p>3-bed · inherited condition</p>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Could sell for (fixed up)</span>
+          <span class="eg-row__val eg-row__val--g">$950,000</span>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Estimated repairs</span>
+          <span class="eg-row__val eg-row__val--r">−$75,000</span>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Selling + carrying costs</span>
+          <span class="eg-row__val eg-row__val--r">−$65,000</span>
+        </div>
+        <div class="eg-row">
+          <span class="eg-row__lbl">Our margin</span>
+          <span class="eg-row__val eg-row__val--r">−$55,000</span>
+        </div>
+        <div class="eg-row eg-row--offer">
+          <span class="eg-row__lbl">Your cash offer</span>
+          <span class="eg-row__val">~$755,000</span>
+        </div>
+      </div>
+    </div>
+    <p class="t-small mt-16">Illustrative only. Actual offers depend on your home's specific condition, current repair costs, and local market at the time of our walkthrough.</p>
+  </div>
+</section>
+
+<!-- ═══ S4: FACTORS ═══ -->
+<section class="section--gray">
+  <div class="wrap">
+    <p class="eyebrow">What moves the number</p>
+    <h2>What makes your offer higher or lower</h2>
+    <p>Five factors drive nearly every cash offer. Here's how each one works and what it means for your number.</p>
+
+    <div class="factors">
+      <div class="factor">
+        <div class="factor__icon">🔨</div>
+        <h3>Condition and repairs needed</h3>
+        <p>The biggest factor. A house needing a full kitchen and new roof gets a lower offer than one that needs paint and carpet. We estimate repairs conservatively — we're taking on the risk if the number runs high.</p>
+      </div>
+      <div class="factor">
+        <div class="factor__icon">📍</div>
+        <h3>Location and local demand</h3>
+        <p>What updated homes in your specific neighborhood are selling for sets the ceiling on what we can offer. Strong, fast-moving markets allow higher offers; softer markets require tighter math.</p>
+      </div>
+      <div class="factor">
+        <div class="factor__icon">📅</div>
+        <h3>Your timeline</h3>
+        <p>A 7-day close and a 90-day close produce different carrying cost calculations. We build your timeline into the offer — whichever direction works for you.</p>
+      </div>
+      <div class="factor">
+        <div class="factor__icon">⚖️</div>
+        <h3>Title and legal complexity</h3>
+        <p>Inherited homes, properties in probate, homes with liens or multiple owners on title take more time and cost to close. We handle all of these situations — they factor into what we can offer.</p>
+      </div>
+      <div class="factor">
+        <div class="factor__icon">🏘️</div>
+        <h3>Current market conditions</h3>
+        <p>In a strong seller's market where renovated homes move fast, we can pay more. In a slower market where updated homes sit longer, our margins tighten and offers adjust accordingly.</p>
+      </div>
+      <div class="factor">
+        <div class="factor__icon">🔑</div>
+        <h3>Occupancy situation</h3>
+        <p>Vacant homes are simpler and typically receive higher offers. Tenant-occupied homes — especially those with complicated lease situations — carry additional costs we factor in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S5: COMPARISON TABLE ═══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">The honest comparison</p>
+    <h2>Cash offer vs. listing with an agent: what you actually net</h2>
+    <p>Most sellers compare the cash offer to the Zillow estimate and feel like they're leaving money on the table. The real comparison is what you'd walk away with after repairs, commissions, and carrying costs. Here's that math on a Midwest home Zillow estimates at $200,000:</p>
+
+    <div class="table-wrap">
+      <table class="comp">
+        <thead>
+          <tr>
+            <th>Cost or factor</th>
+            <th class="hl">Cash offer (Doctor Homes)</th>
+            <th>Traditional listing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sale / offer price</td>
+            <td class="hl"><strong>$123,000</strong></td>
+            <td>$200,000 <span class="t-small">(if it sells)</span></td>
+          </tr>
+          <tr>
+            <td>Repairs before listing</td>
+            <td class="hl"><span class="chk">$0 — we buy as-is</span></td>
+            <td><span class="crs">−$35,000</span> <span class="t-small">(your cost)</span></td>
+          </tr>
+          <tr>
+            <td>Agent commissions (5–6%)</td>
+            <td class="hl"><span class="chk">$0</span></td>
+            <td><span class="crs">−$12,000</span></td>
+          </tr>
+          <tr>
+            <td>Closing costs</td>
+            <td class="hl"><span class="chk">$0 — we cover them</span></td>
+            <td><span class="crs">−$4,000</span></td>
+          </tr>
+          <tr>
+            <td>Carrying costs (90 days: taxes, insurance, utilities)</td>
+            <td class="hl"><span class="chk">$0</span></td>
+            <td><span class="crs">−$4,500</span></td>
+          </tr>
+          <tr>
+            <td>Staging and cleaning</td>
+            <td class="hl"><span class="chk">$0</span></td>
+            <td><span class="crs">−$2,000</span></td>
+          </tr>
+          <tr>
+            <td>Risk of buyer falling through</td>
+            <td class="hl"><span class="chk">None — we close</span></td>
+            <td><span class="crs">Real — ~20% of listings fall through</span></td>
+          </tr>
+          <tr>
+            <td>Time to close</td>
+            <td class="hl"><span class="chk">7–30 days, on your timeline</span></td>
+            <td>60–120+ days</td>
+          </tr>
+          <tr class="row-total">
+            <td>What you actually walk away with</td>
+            <td class="hl">$123,000</td>
+            <td>~$142,500</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-16">In this example, the real gap between a cash offer and listing traditionally is roughly <strong>$19,500</strong> — not $77,000, which is what comparing the headline numbers suggests. Whether that gap is worth months of repairs, showings, and uncertainty is a decision only you can make.</p>
+
+    <div class="callout mt-24">
+      <p><strong>When listing clearly wins:</strong> If your home is in good shape, priced for a strong market, and you have 60–90 days to wait, listing with an agent will almost certainly net you more. We'll tell you this honestly — we're not the right fit for every seller.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S6: FIT / NOT FIT ═══ -->
+<section class="section--gray">
+  <div class="wrap">
+    <p class="eyebrow">Is it right for you?</p>
+    <h2>When a cash offer makes sense — and when it doesn't</h2>
+
+    <div class="fit-grid">
+      <div class="fit-box fit-box--yes">
+        <h3 class="yes">✓ A cash offer usually makes sense when…</h3>
+        <ul>
+          <li>The house needs significant repairs you don't want to manage</li>
+          <li>You're handling an inherited property from out of state</li>
+          <li>You have a time-sensitive situation — a move, a medical need, a foreclosure date</li>
+          <li>You want certainty — no strangers, no showings, no risk of the deal falling through</li>
+          <li>The process matters as much as the price — you want it handled, not managed</li>
+        </ul>
+      </div>
+      <div class="fit-box fit-box--no">
+        <h3 class="no">Listing is probably better when…</h3>
+        <ul>
+          <li>Your home is in move-in-ready condition</li>
+          <li>You have 60–90 days and no urgency</li>
+          <li>Maximizing the sale price is your top priority</li>
+          <li>You're comfortable with showings, negotiations, and the uncertainty of a traditional sale</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="honest">
+      <h3>We'll tell you honestly which path fits your situation.</h3>
+      <p>When we sit down with a seller, we show them both numbers — what we'd offer and what they'd realistically net by listing, including repair costs and commissions. Then we let them decide. If listing clearly makes more sense, we'll say so. We'd rather lose a deal than take a house from someone who'd be better off listing it.</p>
+      <ul>
+        <li>No pressure to accept our offer</li>
+        <li>No obligation for getting a number</li>
+        <li>The offer is yours to compare, sit on, or walk away from — no deadline</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S7: TESTIMONIALS ═══ -->
+<section>
+  <div class="wrap">
+    <p class="eyebrow">What sellers say</p>
+    <h2>Real sellers on whether our offers were fair</h2>
+    <p>The concern we hear most: "I don't want to feel taken advantage of." Here's what real sellers said after seeing our offer.</p>
+
+    <div class="testi-grid">
+      <div class="testi">
+        <div class="testi__stars">★★★★★</div>
+        <p class="testi__body">"I was skeptical and didn't expect anything but a low offer and a lot of headaches… everyone involved held my hand throughout the difficult process of selling our family home. We had a hoarding situation and a lot of water damage. But <em>we got a very fair offer.</em>"</p>
+        <div class="testi__author">
+          <div class="testi__avatar">M</div>
+          <div>
+            <div class="testi__name">Michelle F. <span class="bbb">BBB ★★★★★</span></div>
+            <div class="testi__src">SF Bay Area · Inherited home, hoarding situation</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi">
+        <div class="testi__stars">★★★★★</div>
+        <p class="testi__body">"They guided us and explained all our options. I highly recommend them — <em>they're one of the few honest companies that is not looking to make a quick buck.</em>"</p>
+        <div class="testi__author">
+          <div class="testi__avatar">C</div>
+          <div>
+            <div class="testi__name">Charles L. <span class="bbb">BBB ★★★★★</span></div>
+            <div class="testi__src">Indianapolis · Inherited property, comparison shopping</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi">
+        <div class="testi__stars">★★★★★</div>
+        <p class="testi__body">"After calling a few companies, they gave me <em>the top offer for my house.</em> They took care of everything. They gave me peace of mind — they are very honest people."</p>
+        <div class="testi__author">
+          <div class="testi__avatar">D</div>
+          <div>
+            <div class="testi__name">Donald H. <span class="bbb">BBB ★★★★★</span></div>
+            <div class="testi__src">St. Louis · Called multiple buyers before deciding</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Founder block -->
+    <div class="founder">
+      <div class="founder__photo">C</div>
+      <div>
+        <p class="founder__quote">"I started this company in 2016 because I kept meeting homeowners who needed a real option that wasn't the traditional listing process. We've bought over 1,500 houses since. I don't personally walk through every home — my local team does. But every deal comes across my desk, and I stand behind every one. We'll show you both sides of the math. If listing makes more sense for you, we'll say so."</p>
+        <div class="founder__sig">— Chris, Founder</div>
+        <div class="founder__title">Doctor Homes · Buying houses since 2016</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S8: FAQ ═══ -->
+<section class="section--gray">
+  <div class="wrap">
+    <p class="eyebrow">Common questions</p>
+    <h2>Questions sellers ask about cash offers</h2>
+
+    <div class="faq">
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          How do cash buyers actually calculate their offers?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <p>Every cash buyer starts with what your home could sell for on the open market once fully repaired, then works backward. Subtract the cost of those repairs, the costs to carry and sell the property afterward, and a margin for their business. What's left is the offer. The gap between a cash offer and a full retail listing price is usually smaller than sellers expect once you factor in what listing actually costs you.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          Is a cash offer always 70% of market value?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <p>The "70% rule" is a rough industry benchmark, not a fixed contract. Actual offers vary based on your home's specific condition, what repairs actually cost in your local market, and how quickly updated homes are selling nearby. A home in good condition in a strong market will get a higher offer percentage. The only way to know is to get a real number based on your specific home.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          What if I think the offer is too low?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <p>You're never obligated to accept. We always show you both sides — what we're offering and what you'd likely net by listing, including repair costs, agent fees, and holding costs. If listing makes more sense for your situation, we'll tell you. We'd rather you make the right decision for yourself than accept an offer that isn't right for you.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          How is Doctor Homes different from Opendoor or Offerpad?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <p>iBuyers like Opendoor won't buy homes that need significant repairs, and they charge service fees of 5–8% on top. Doctor Homes buys homes in any condition — inherited properties, fixer-uppers, homes with tenants, homes vacant for years. We charge no fees, no commissions, and we cover your closing costs. We're also a local team, not a national algorithm — you'll talk to a real person in your city from the first call.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          Do I have to decide quickly?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <p>No. There's no expiration date, no countdown, no pressure. Take as long as you need to compare the offer, talk to your family, or get a second opinion. When you're ready — whether that's tomorrow or six months from now — we'll be here. The offer is yours to hold, compare, or walk away from.</p>
+        </div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)" aria-expanded="false">
+          Will you buy my house if it's in really rough shape?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-a">
+          <p>Yes. We've bought homes with foundation issues, fire damage, hoarding situations, water damage, and homes vacant for years. Condition doesn't stop us — it just factors into the math. We walk through the property, get a clear picture of what's needed, and make an offer based on the real numbers. We've seen it all.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ S9: CTA / FORM ═══ -->
+<section class="cta-section" id="get-offer">
+  <div class="wrap">
+    <p class="eyebrow" style="color:var(--orange)">Ready when you are</p>
+    <h2>See what your house is worth — no pressure, no commitment</h2>
+    <p>We'll walk through your home, show you the math, and give you a fair cash offer. Take your time. If it works for you, we close on your timeline. If it doesn't, no hard feelings.</p>
+
+    <div class="offer-form">
+      <h3>Get a free cash offer</h3>
+      <p class="offer-form__note">We'll respond within 24 hours. No spam, no mailing list, no pressure.</p>
+      <form>
+        <div class="fg">
+          <label for="f-name">Your name</label>
+          <input type="text" id="f-name" name="name" placeholder="e.g., Sandra R." autocomplete="name">
+        </div>
+        <div class="fg">
+          <label for="f-phone">Phone we can reach you at</label>
+          <input type="tel" id="f-phone" name="phone" placeholder="e.g., (313) 555-0100" autocomplete="tel">
+        </div>
+        <div class="fg">
+          <label for="f-addr">The house you're thinking about selling</label>
+          <input type="text" id="f-addr" name="address" placeholder="e.g., 1234 Main St, Detroit, MI">
+        </div>
+        <button type="submit" class="btn-form">Get a fair cash offer</button>
+        <p class="form-priv">We only use this to prepare your offer. No spam. No mailing lists.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="footer">
+  <div class="footer__grid">
+    <div>
+      <div class="footer__logo">Doctor<span>Homes</span></div>
+      <p class="footer__desc">We buy houses for cash in Detroit, Cleveland, Indianapolis, St. Louis, Kansas City, and the SF Bay Area. Local teams, real offers, any condition. Buying homes since 2016.</p>
+      <div class="footer__nap">
+        <div>📍 [Your local office address]</div>
+        <div>📞 <a href="tel:+15551234567">(555) 123-4567</a></div>
+        <div>✅ BBB Accredited · A+ Rating · Since 2016</div>
+      </div>
+    </div>
+    <div>
+      <h4>Our markets</h4>
+      <ul>
+        <li><a href="#">Detroit, MI</a></li>
+        <li><a href="#">Cleveland, OH</a></li>
+        <li><a href="#">Indianapolis, IN</a></li>
+        <li><a href="#">St. Louis, MO</a></li>
+        <li><a href="#">Kansas City, MO/KS</a></li>
+        <li><a href="#">SF Bay Area, CA</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Learn</h4>
+      <ul>
+        <li><a href="#">How we buy homes</a></li>
+        <li><a href="#">How we calculate offers</a></li>
+        <li><a href="#">Sell an inherited home</a></li>
+        <li><a href="#">Sell a rental property</a></li>
+        <li><a href="#">Foreclosure help</a></li>
+        <li><a href="#">About us</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <p>© 2025 Doctor Homes · ZREI Brands · All rights reserved ·
+    <a href="#">Privacy Policy</a> · <a href="#">Terms</a></p>
+  </div>
+</footer>
+
+<script>
+  function toggleFaq(btn) {
+    const item = btn.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+    btn.setAttribute('aria-expanded', String(!isOpen));
+  }
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+</script>
+</body>
+</html>
